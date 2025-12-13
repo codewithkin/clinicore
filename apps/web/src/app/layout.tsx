@@ -1,41 +1,62 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Montserrat, Inter } from "next/font/google";
 import "../index.css";
 import Providers from "@/components/providers";
 import Header from "@/components/header";
 
-const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
+// Google Fonts
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"], // Regular, Medium, Bold
 });
 
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
+// SEO Metadata
 export const metadata: Metadata = {
-	title: "my-better-t-app",
-	description: "my-better-t-app",
+  title: "Clinicore – The Core of Clinic Management",
+  description:
+    "Clinicore centralizes your patient records, appointments, and billing, helping clinics operate efficiently and reliably.",
+  openGraph: {
+    title: "Clinicore – The Core of Clinic Management",
+    description:
+      "Clinicore centralizes your patient records, appointments, and billing, helping clinics operate efficiently and reliably.",
+    url: "https://clinicore.space",
+    siteName: "Clinicore",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clinicore – The Core of Clinic Management",
+    description:
+      "Clinicore centralizes your patient records, appointments, and billing, helping clinics operate efficiently and reliably.",
+    site: "@Clinicore",
+  },
+  metadataBase: new URL("https://clinicore.space"),
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	return (
-		<html lang="en" suppressHydrationWarning>
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-			>
-				<Providers>
-					<div className="grid grid-rows-[auto_1fr] h-svh">
-						<Header />
-						{children}
-					</div>
-				</Providers>
-			</body>
-		</html>
-	);
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${montserrat.variable} ${inter.variable} antialiased`}
+      >
+        <Providers>
+          <div className="grid grid-rows-[auto_1fr] h-svh">
+            <Header />
+            {children}
+          </div>
+        </Providers>
+      </body>
+    </html>
+  );
 }
