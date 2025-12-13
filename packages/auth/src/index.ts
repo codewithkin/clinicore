@@ -16,9 +16,7 @@ export const auth = betterAuth({
   },
   plugins: [
     // Organization plugin
-    organization({
-      requireInvite: true, // Force users to be invited by admin
-    }),
+    organization(),
 
     // Polar payment integration
     polar({
