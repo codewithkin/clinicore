@@ -123,7 +123,7 @@ export default function SignUpPage() {
                     >
                         {signupMutation.isPending
                             ? "Creating clinic..."
-                            : "Create clinic & continue"}
+                            : "Create clinic"}
                     </Button>
 
                     <p className="text-sm text-gray-500 text-center">
