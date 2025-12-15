@@ -1,5 +1,5 @@
 {
-  "name": "my-better-t-app",
+  "name": "clinicore",
   "private": true,
   "type": "module",
   "workspaces": {
@@ -25,10 +25,10 @@
     "check-types": "turbo check-types",
     "dev:native": "turbo -F native dev",
     "dev:web": "turbo -F web dev",
-    "db:push": "turbo -F @my-better-t-app/db db:push",
-    "db:studio": "turbo -F @my-better-t-app/db db:studio",
-    "db:generate": "turbo -F @my-better-t-app/db db:generate",
-    "db:migrate": "turbo -F @my-better-t-app/db db:migrate"
+    "db:push": "turbo -F @clinicore/db db:push",
+    "db:studio": "turbo -F @clinicore/db db:studio",
+    "db:generate": "turbo -F @clinicore/db db:generate",
+    "db:migrate": "turbo -F @clinicore/db db:migrate"
   },
   "dependencies": {
     "@polar-sh/better-auth": "^1.6.1",

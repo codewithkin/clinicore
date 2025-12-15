@@ -10,7 +10,7 @@ export default async function DashboardPage() {
 	});
 
 	if (!session?.user) {
-		redirect("/login");
+		redirect("/auth/signup");
 	}
 
 	const { data: customerState } = await authClient.customer.state({
