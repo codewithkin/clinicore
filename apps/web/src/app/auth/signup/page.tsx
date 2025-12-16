@@ -8,57 +8,40 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 /**
  * Responsible for rendering the sign up page
- * - Collects initial organization and admin credentials
- * - Creates a new organization with the admin user
- * - Immediately redirects the user to Polar checkout
+ * - Creates a normal user account (no organization)
+ * - Establishes a session
+ * - Redirects user to onboarding
  */
 export default function SignUpPage() {
-    const [orgName, setOrgName] = useState("");
+    const router = useRouter();
+
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const signupMutation = useMutation({
         mutationFn: async () => {
-            /**
-             * 1. Create organization + admin user
-             */
-            const { data: org, error: orgError } =
-                await authClient.organization.create({
-                    name: orgName,
-                    email,
-                    password,
-                });
-
-            if (orgError || !org) {
-                throw new Error(
-                    orgError?.message || "Failed to create organization"
-                );
-            }
-
-            /**
-             * 2. Immediately start Polar checkout
-             * Polar will handle:
-             * - Trial start
-             * - Payment method collection
-             * - Subscription activation
-             */
-            const { error: checkoutError } = await authClient.polar.checkout({
-                productSlug: "starter",
-                callbackURL: "/dashboard",
+            const { data, error } = await authClient.signUp.email({
+                name,
+                email,
+                password,
+                callbackURL: "/onboarding",
             });
 
-            if (checkoutError) {
-                throw new Error(
-                    checkoutError.message || "Failed to start checkout"
-                );
+            if (error || !data) {
+                throw new Error(error?.message || "Failed to create account");
             }
+
+            return data;
         },
 
         onSuccess: () => {
-            toast.success("Clinic created. Redirecting to checkout…");
+            toast.success("Account created. Redirecting…");
+            router.replace("/onboarding");
         },
 
         onError: (error: Error) => {
@@ -75,27 +58,27 @@ export default function SignUpPage() {
                         Clinicore
                     </h2>
                     <h1 className="text-2xl font-medium mt-2">
-                        Register your clinic
+                        Create your account
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">
-                        Create your organization to get started
+                        Start by creating an admin account
                     </p>
                 </div>
 
                 {/* Form */}
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                        <Label htmlFor="org">Clinic / Hospital Name</Label>
+                        <Label htmlFor="name">Full Name</Label>
                         <Input
-                            id="org"
-                            placeholder="Clinicore Health"
-                            value={orgName}
-                            onChange={(e) => setOrgName(e.target.value)}
+                            id="name"
+                            placeholder="Kin Zinzombe"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
                         />
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <Label htmlFor="email">Admin Email</Label>
+                        <Label htmlFor="email">Email</Label>
                         <Input
                             id="email"
                             type="email"
@@ -122,8 +105,8 @@ export default function SignUpPage() {
                         onClick={() => signupMutation.mutate()}
                     >
                         {signupMutation.isPending
-                            ? "Creating clinic..."
-                            : "Create clinic"}
+                            ? "Creating account..."
+                            : "Continue"}
                     </Button>
 
                     <p className="text-sm text-gray-500 text-center">

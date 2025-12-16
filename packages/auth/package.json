@@ -15,11 +15,13 @@
     "@my-better-t-app/config": "workspace:*"
   },
   "dependencies": {
-    "better-auth": "catalog:",
+    "@dodopayments/better-auth": "^1.4.1",
+    "@my-better-t-app/db": "workspace:*",
     "@polar-sh/better-auth": "catalog:",
     "@polar-sh/sdk": "^0.34.16",
+    "better-auth": "^1.4.7",
+    "dodopayments": "^2.8.2",
     "dotenv": "catalog:",
-    "zod": "catalog:",
-    "@my-better-t-app/db": "workspace:*"
+    "zod": "^4.2.0"
   }
 }
