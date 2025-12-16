@@ -22,6 +22,7 @@
     "better-auth": "^1.4.7",
     "dodopayments": "^2.8.2",
     "dotenv": "catalog:",
+    "nodemailer": "^7.0.11",
     "zod": "^4.2.0"
   }
 }

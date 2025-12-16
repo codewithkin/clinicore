@@ -5,15 +5,39 @@ import { polar, checkout, portal } from "@polar-sh/better-auth";
 import { polarClient } from "./lib/payments";
 import prisma from "@my-better-t-app/db";
 import { organization } from "better-auth/plugins/organization";
+import { sendVerificationEmail } from "./utils/sendVerificationEmail";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+
   trustedOrigins: [process.env.CORS_ORIGIN || ""],
+
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
   },
+
+  emailVerification: {
+    sendVerificationEmail: async (
+      { user, url },
+      _request
+    ) => {
+      await sendVerificationEmail({
+        to: user.email,
+        subject: "Verify your Clinicore email address",
+        text: `Welcome to Clinicore 👋
+
+Please verify your email address by clicking the link below:
+
+${url}
+
+If you did not create an account, you can safely ignore this email.`,
+      });
+    },
+  },
+
   plugins: [
     // Organization plugin
     organization(),

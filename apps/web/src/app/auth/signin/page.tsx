@@ -26,23 +26,37 @@ export default function SignInPage() {
                     callbackURL: "/dashboard",
                     rememberMe: false,
                 },
-                {}
+                {
+                    onError: (ctx) => {
+                        // Email not verified
+                        if (ctx.error.status === 403) {
+                            throw new Error(
+                                "Please verify your email address. A verification link has been sent to your inbox."
+                            );
+                        }
+
+                        throw new Error(ctx.error.message);
+                    },
+                }
             );
 
-            if (error) {
-                throw new Error(error.message || "Failed to sign in");
+            if (!data) {
+                throw new Error("Failed to sign in");
             }
 
             return data;
         },
+
         onSuccess: () => {
             toast.success("Signed in successfully");
             router.replace("/dashboard");
         },
+
         onError: (error: Error) => {
             toast.error(error.message);
         },
     });
+
 
     return (
         <section className="min-h-screen flex items-center justify-center px-4">
