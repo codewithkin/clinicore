@@ -51,8 +51,16 @@ If you did not create an account, you can safely ignore this email.`,
         checkout({
           products: [
             {
-              productId: process.env.POLAR_PRODUCT_ID || "",
-              slug: process.env.POLAR_PRODUCT_SLUG || "",
+              productId: process.env.POLAR_STARTER_PRODUCT_ID || "",
+              slug: process.env.POLAR_STARTER_PRODUCT_SLUG || "",
+            },
+            {
+              productId: process.env.POLAR_SMALL_CLINIC_PRODUCT_ID || "",
+              slug: process.env.POLAR_SMALL_CLINIC_PRODUCT_SLUG || "",
+            },
+            {
+              productId: process.env.POLAR_GROWING_CLINIC_PRODUCT_ID || "",
+              slug: process.env.POLAR_GROWING_CLINIC_PRODUCT_SLUG || "",
             },
           ],
           successUrl: process.env.POLAR_SUCCESS_URL || "",
