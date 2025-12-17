@@ -13,6 +13,7 @@ model User {
   email         String
   emailVerified Boolean
   image         String?
+  plan          String?
   createdAt     DateTime
   updatedAt     DateTime
   sessions      Session[]
