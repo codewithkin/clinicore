@@ -4,6 +4,9 @@ export interface Plan {
   id: PlanId;
   name: string;
   description: string;
+  price: number;
+  perAdditionalSeat: number;
+  productId: string;
   limits: {
     doctors: number;
     receptionists: number;
@@ -17,7 +20,10 @@ const plans: Plan[] = [
   {
     id: "starter",
     name: "Starter",
-    description: "Perfect for solo practitioners just getting started",
+    description: "For one doctor starting out",
+    price: 29.99,
+    perAdditionalSeat: 15,
+    productId: process.env.NEXT_PUBLIC_POLAR_STARTER_PRODUCT_ID || "",
     limits: {
       doctors: 1,
       receptionists: 1,
@@ -29,7 +35,10 @@ const plans: Plan[] = [
   {
     id: "small_clinic",
     name: "Small Clinic",
-    description: "Ideal for small practices with a growing patient base",
+    description: "For small clinics with a few doctors",
+    price: 49.99,
+    perAdditionalSeat: 15,
+    productId: process.env.NEXT_PUBLIC_POLAR_SMALL_CLINIC_PRODUCT_ID || "",
     limits: {
       doctors: 3,
       receptionists: 3,
@@ -41,7 +50,10 @@ const plans: Plan[] = [
   {
     id: "growing_clinic",
     name: "Growing Clinic",
-    description: "Built for larger practices with extensive needs",
+    description: "For larger clinics with many doctors",
+    price: 99.99,
+    perAdditionalSeat: 15,
+    productId: process.env.NEXT_PUBLIC_POLAR_GROWING_CLINIC_PRODUCT_ID || "",
     limits: {
       doctors: 7,
       receptionists: 7,
