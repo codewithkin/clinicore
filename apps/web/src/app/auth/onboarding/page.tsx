@@ -400,10 +400,18 @@ export default function Onboarding() {
 
                             <div className="grid gap-4">
                                 {plans.map((plan) => (
-                                    <button
+                                    <div
                                         key={plan.id}
+                                        role="button"
+                                        tabIndex={0}
                                         onClick={() => setSelectedPlan(plan.id)}
                                         onDoubleClick={() => setModalPlan(plan)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === " ") {
+                                                e.preventDefault();
+                                                setSelectedPlan(plan.id);
+                                            }
+                                        }}
                                         className={`border rounded-xl p-5 text-left transition-all ${selectedPlan === plan.id
                                             ? "border-teal-500 bg-teal-50/50"
                                             : "border-gray-200 hover:border-gray-300"
@@ -452,7 +460,7 @@ export default function Onboarding() {
                                                 </div>
                                             )}
                                         </div>
-                                    </button>
+                                    </div>
                                 ))}
                             </div>
 
