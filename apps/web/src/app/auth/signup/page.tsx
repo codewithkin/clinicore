@@ -29,7 +29,7 @@ export default function SignUpPage() {
                 name,
                 email,
                 password,
-                callbackURL: "/onboarding",
+                callbackURL: "/auth/signin"
             });
 
             if (error || !data) {
@@ -41,7 +41,7 @@ export default function SignUpPage() {
 
         onSuccess: () => {
             toast.success("Account created. Redirecting…");
-            router.replace("/onboarding");
+            router.replace("/auth/success");
         },
 
         onError: (error: Error) => {

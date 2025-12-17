@@ -33,6 +33,7 @@
   "dependencies": {
     "@polar-sh/better-auth": "^1.6.1",
     "dotenv": "catalog:",
+    "framer-motion": "^12.23.26",
     "zod": "catalog:"
   },
   "devDependencies": {
