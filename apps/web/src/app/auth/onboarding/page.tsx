@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { CheckCircle, Upload, ArrowLeft, Camera } from "lucide-react";
+import { CheckCircle, Upload, ArrowLeft, Camera, Check, Stethoscope, Users, Database, Mail, X, Info } from "lucide-react";
 import { uploadLogo } from "@/lib/s3Client";
 import plans, { type PlanId } from "@/data/plans";
 
@@ -41,7 +41,8 @@ export default function Onboarding() {
     const [creatingOrg, setCreatingOrg] = useState(false);
 
     // Plan state
-    const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<PlanId | null>("starter");
+    const [modalPlan, setModalPlan] = useState<Plan | null>(null);
 
     // Invite state (step 3)
     const [inviteEmail, setInviteEmail] = useState("");
@@ -113,9 +114,26 @@ export default function Onboarding() {
        Step 2: Select Plan (proceed to step 3)
     ---------------------------------------------- */
 
-    function proceedToInvites() {
+    async function proceedToInvites() {
         if (!selectedPlan) return;
-        setStep(3);
+
+        const plan = plans.find(p => p.id === selectedPlan);
+        if (!plan?.productId) {
+            toast.error("Invalid plan selected");
+            return;
+        }
+
+        // Initiate checkout
+        const { data, error } = await authClient.checkout({
+            products: [plan.productId],
+        });
+
+        if (error || !data?.url) {
+            toast.error("Failed to start checkout");
+            return;
+        }
+
+        window.location.href = data.url;
     }
 
     /* ---------------------------------------------
@@ -359,6 +377,7 @@ export default function Onboarding() {
                                 </div>
 
                                 <Button
+                                    className="w-full"
                                     disabled={!orgName || creatingOrg}
                                     onClick={createOrganization}
                                 >
@@ -384,31 +403,53 @@ export default function Onboarding() {
                                     <button
                                         key={plan.id}
                                         onClick={() => setSelectedPlan(plan.id)}
+                                        onDoubleClick={() => setModalPlan(plan)}
                                         className={`border rounded-xl p-5 text-left transition-all ${selectedPlan === plan.id
-                                            ? "border-green-500 bg-green-50/50"
+                                            ? "border-teal-500 bg-teal-50/50"
                                             : "border-gray-200 hover:border-gray-300"
                                             }`}
                                     >
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-2">
+                                                <div className="flex items-center gap-2 mb-1">
                                                     <span className="font-semibold text-lg">
                                                         {plan.name}
                                                     </span>
+                                                    <button
+                                                        onClick={() => setModalPlan(plan)}
+                                                        className="text-gray-500 hover:text-gray-700 transition-colors"
+                                                        aria-label={`More info about ${plan.name}`}
+                                                    >
+                                                        <Info className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                                <div className="text-2xl font-bold text-green-400 mb-2">
+                                                    ${plan.price}<span className="text-sm font-normal text-gray-500">/month</span>
                                                 </div>
                                                 <p className="text-sm text-gray-600 mb-3">
                                                     {plan.description}
                                                 </p>
                                                 <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                                                    <span>{plan.limits.doctors} {plan.limits.doctors === 1 ? 'doctor' : 'doctors'}</span>
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Stethoscope className="w-3.5 h-3.5" />
+                                                        {plan.limits.doctors} {plan.limits.doctors === 1 ? 'doctor' : 'doctors'}
+                                                    </span>
                                                     <span>•</span>
-                                                    <span>{plan.limits.patients} patients</span>
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Users className="w-3.5 h-3.5" />
+                                                        {plan.limits.patients} patients
+                                                    </span>
                                                     <span>•</span>
-                                                    <span>{plan.limits.storageGB}GB storage</span>
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Database className="w-3.5 h-3.5" />
+                                                        {plan.limits.storageGB}GB storage
+                                                    </span>
                                                 </div>
                                             </div>
                                             {selectedPlan === plan.id && (
-                                                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                                <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center flex-shrink-0">
+                                                    <Check className="w-4 h-4 text-white" />
+                                                </div>
                                             )}
                                         </div>
                                     </button>
@@ -416,7 +457,7 @@ export default function Onboarding() {
                             </div>
 
                             <Button
-                                className="mt-6"
+                                className="w-full mt-6"
                                 disabled={!selectedPlan}
                                 onClick={proceedToInvites}
                             >
@@ -487,12 +528,14 @@ export default function Onboarding() {
 
                                 <div className="flex flex-col gap-3">
                                     <Button
+                                        className="w-full"
                                         disabled={sendingInvites}
                                         onClick={finishSetup}
                                     >
                                         {sendingInvites ? "Sending invites..." : "Finish setup"}
                                     </Button>
                                     <Button
+                                        className="w-full"
                                         variant="ghost"
                                         onClick={skipInvites}
                                         disabled={sendingInvites}
@@ -502,6 +545,108 @@ export default function Onboarding() {
                                 </div>
                             </div>
                         </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Plan Details Modal */}
+                <AnimatePresence>
+                    {modalPlan && (
+                        <>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 bg-black/50 z-50"
+                                onClick={() => setModalPlan(null)}
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-50 p-6"
+                            >
+                                <button
+                                    onClick={() => setModalPlan(null)}
+                                    className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-gray-500" />
+                                </button>
+
+                                <div className="mb-6">
+                                    <h2 className="text-2xl font-bold mb-2">{modalPlan.name}</h2>
+                                    <div className="text-3xl font-bold text-teal-600 mb-3">
+                                        ${modalPlan.price}<span className="text-lg font-normal text-gray-500">/month</span>
+                                    </div>
+                                    <p className="text-gray-600">{modalPlan.description}</p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <h3 className="font-semibold text-gray-900">What's included:</h3>
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                                <Stethoscope className="w-4 h-4 text-teal-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900">{modalPlan.limits.doctors} {modalPlan.limits.doctors === 1 ? 'Doctor' : 'Doctors'}</p>
+                                                <p className="text-xs text-gray-500">Medical professionals</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                                <Users className="w-4 h-4 text-teal-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900">{modalPlan.limits.receptionists} {modalPlan.limits.receptionists === 1 ? 'Receptionist' : 'Receptionists'}</p>
+                                                <p className="text-xs text-gray-500">Front desk staff</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                                <Users className="w-4 h-4 text-teal-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900">{modalPlan.limits.patients.toLocaleString()} Patients</p>
+                                                <p className="text-xs text-gray-500">Active patient records</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                                <Mail className="w-4 h-4 text-teal-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900">{modalPlan.limits.emailsPerMonth.toLocaleString()} Emails/month</p>
+                                                <p className="text-xs text-gray-500">Automated notifications</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                                <Database className="w-4 h-4 text-teal-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900">{modalPlan.limits.storageGB}GB Storage</p>
+                                                <p className="text-xs text-gray-500">Secure cloud storage</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    className="w-full mt-6"
+                                    onClick={() => {
+                                        setSelectedPlan(modalPlan.id);
+                                        setModalPlan(null);
+                                    }}
+                                >
+                                    Select {modalPlan.name}
+                                </Button>
+                            </motion.div>
+                        </>
                     )}
                 </AnimatePresence>
             </article>
