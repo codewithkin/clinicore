@@ -29,7 +29,7 @@ export default function SignUpPage() {
                 name,
                 email,
                 password,
-                callbackURL: "/auth/signin"
+                callbackURL: "/auth/onboarding"
             });
 
             if (error || !data) {
