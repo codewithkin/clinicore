@@ -47,10 +47,64 @@ export default function Onboarding() {
     const [modalPlan, setModalPlan] = useState<Plan | null>(null);
     const [isYearly, setIsYearly] = useState(false);
     const [startingCheckout, setStartingCheckout] = useState(false);
+    const [planLimits, setPlanLimits] = useState<Plan | null>(null);
+    const [orgCounts, setOrgCounts] = useState<{ doctors: number; receptionists: number }>({ doctors: 0, receptionists: 0 });
+    const [loadingStep3, setLoadingStep3] = useState(false);
+    const [step3Error, setStep3Error] = useState<string | null>(null);
 
     const toggleYearly = () => {
         setIsYearly(!isYearly);
     };
+
+    // Load current plan + org info when entering step 3
+    useEffect(() => {
+        if (step !== 3) return;
+
+        let cancelled = false;
+        const loadStep3Data = async () => {
+            setLoadingStep3(true);
+            setStep3Error(null);
+
+            try {
+                const planRes = await fetch("/api/user/current-plan");
+                if (!planRes.ok) {
+                    throw new Error("Unable to fetch current plan");
+                }
+                const planJson = await planRes.json();
+                const currentPlan = plans.find((p) => p.id === planJson.plan) || null;
+                if (!currentPlan) {
+                    throw new Error("Unknown plan");
+                }
+                if (!cancelled) setPlanLimits(currentPlan);
+
+                // get organization info (active org by default)
+                const orgResult = await authClient.organization.getFullOrganization?.({});
+                // some SDKs return { data, error }, others return directly; normalize
+                const orgData: any = (orgResult as any)?.data ?? orgResult;
+                const orgError: any = (orgResult as any)?.error;
+                if (orgError) {
+                    throw new Error(orgError.message || "Failed to load organization");
+                }
+
+                const members: Array<{ role?: string }> =
+                    orgData?.organization?.members ?? orgData?.members ?? [];
+
+                const doctors = members.filter((m) => m.role === "doctor").length;
+                const receptionists = members.filter((m) => m.role === "receptionist").length;
+
+                if (!cancelled) setOrgCounts({ doctors, receptionists });
+            } catch (err: any) {
+                if (!cancelled) setStep3Error(err?.message || "Failed to load step data");
+            } finally {
+                if (!cancelled) setLoadingStep3(false);
+            }
+        };
+
+        loadStep3Data();
+        return () => {
+            cancelled = true;
+        };
+    }, [step]);
 
     // Invite state (step 3)
     const [inviteEmail, setInviteEmail] = useState("");
@@ -130,6 +184,7 @@ export default function Onboarding() {
         const plan = plans.find(p => p.id === selectedPlan);
         if (!plan) {
             toast.error("Invalid plan selected");
+            setStartingCheckout(false);
             return;
         }
 
@@ -164,11 +219,13 @@ export default function Onboarding() {
 
             if (!response.ok) {
                 toast.error("Failed to update plan");
+                setStartingCheckout(false);
                 return;
             }
         } catch (err) {
             console.error('Plan update error:', err);
             toast.error("Failed to update plan");
+            setStartingCheckout(false);
             return;
         }
 
@@ -224,6 +281,25 @@ export default function Onboarding() {
         if (!inviteEmail || !inviteEmail.includes("@")) {
             toast.error("Enter a valid email");
             return;
+        }
+
+        // Enforce plan limits for doctors/receptionists using current org counts
+        if (planLimits) {
+            const pendingDoctors = invites.filter((i) => i.role === "doctor").length;
+            const pendingReceptionists = invites.filter((i) => i.role === "receptionist").length;
+
+            const maxDoctors = Math.max(0, planLimits.limits.doctors - orgCounts.doctors);
+            const maxReceptionists = Math.max(0, planLimits.limits.receptionists - orgCounts.receptionists);
+
+            if (inviteRole === "doctor" && pendingDoctors >= maxDoctors) {
+                toast.error("Doctor limit reached for your plan");
+                return;
+            }
+
+            if (inviteRole === "receptionist" && pendingReceptionists >= maxReceptionists) {
+                toast.error("Receptionist limit reached for your plan");
+                return;
+            }
         }
 
         setInvites((s) => [...s, { email: inviteEmail.trim(), role: inviteRole }]);
@@ -549,78 +625,90 @@ export default function Onboarding() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -16 }}
                         >
-                            <h1 className="text-2xl font-medium mb-2">
-                                Invite your team
-                            </h1>
-                            <p className="text-sm text-gray-500 mb-6">
-                                Add team members to collaborate (optional)
-                            </p>
+                            {step3Error ? (
+                                <div className="space-y-4">
+                                    <h1 className="text-2xl font-medium">Setup issue</h1>
+                                    <p className="text-sm text-red-600">{step3Error}</p>
+                                    <Button onClick={() => window.location.reload()}>Retry</Button>
+                                </div>
+                            ) : (
+                                <>
+                                    <h1 className="text-2xl font-medium mb-2">
+                                        Invite your team
+                                    </h1>
+                                    <p className="text-sm text-gray-500 mb-6">
+                                        Add team members to collaborate (optional)
+                                    </p>
 
-                            <div className="flex flex-col gap-6">
-                                <div className="flex flex-col gap-4">
-                                    <div className="flex gap-2">
-                                        <div className="flex-1">
-                                            <Input
-                                                type="email"
-                                                placeholder="kin@clinicore.space"
-                                                value={inviteEmail}
-                                                onChange={(e) => setInviteEmail(e.target.value)}
-                                                onKeyDown={(e) => e.key === "Enter" && addInvite()}
-                                            />
-                                        </div>
-                                        <select
-                                            value={inviteRole}
-                                            onChange={(e) => setInviteRole(e.target.value as "doctor" | "receptionist")}
-                                            className="px-3 py-2 border border-gray-200 rounded-md text-sm"
-                                        >
-                                            <option value="doctor">Doctor</option>
-                                            <option value="receptionist">Receptionist</option>
-                                        </select>
-                                        <Button className="text-white" onClick={addInvite} variant="secondary">
-                                            Add
-                                        </Button>
-                                    </div>
-
-                                    {invites.length > 0 && (
-                                        <div className="border rounded-lg divide-y">
-                                            {invites.map((inv, idx) => (
-                                                <div key={idx} className="flex items-center justify-between p-3">
-                                                    <div>
-                                                        <p className="text-sm font-medium">{inv.email}</p>
-                                                        <p className="text-xs text-gray-500 capitalize">{inv.role}</p>
-                                                    </div>
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => removeInvite(idx)}
-                                                    >
-                                                        <Trash className="w-4 h-4 mr-1" />
-                                                        Remove
-                                                    </Button>
+                                    <div className="flex flex-col gap-6">
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex gap-2">
+                                                <div className="flex-1">
+                                                    <Input
+                                                        type="email"
+                                                        placeholder="kin@clinicore.space"
+                                                        value={inviteEmail}
+                                                        onChange={(e) => setInviteEmail(e.target.value)}
+                                                        onKeyDown={(e) => e.key === "Enter" && addInvite()}
+                                                        disabled={loadingStep3}
+                                                    />
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                                <select
+                                                    value={inviteRole}
+                                                    onChange={(e) => setInviteRole(e.target.value as "doctor" | "receptionist")}
+                                                    className="px-3 py-2 border border-gray-200 rounded-md text-sm"
+                                                    disabled={loadingStep3}
+                                                >
+                                                    <option value="doctor">Doctor</option>
+                                                    <option value="receptionist">Receptionist</option>
+                                                </select>
+                                                <Button className="text-white" onClick={addInvite} variant="secondary" disabled={loadingStep3}>
+                                                    Add
+                                                </Button>
+                                            </div>
 
-                                <div className="flex flex-col gap-3">
-                                    <Button
-                                        className="w-full"
-                                        disabled={sendingInvites}
-                                        onClick={finishSetup}
-                                    >
-                                        {sendingInvites ? "Sending invites..." : "Finish setup"}
-                                    </Button>
-                                    <Button
-                                        className="w-full"
-                                        variant="ghost"
-                                        onClick={skipInvites}
-                                        disabled={sendingInvites}
-                                    >
-                                        Skip
-                                    </Button>
-                                </div>
-                            </div>
+                                            {invites.length > 0 && (
+                                                <div className="border rounded-lg divide-y">
+                                                    {invites.map((inv, idx) => (
+                                                        <div key={idx} className="flex items-center justify-between p-3">
+                                                            <div>
+                                                                <p className="text-sm font-medium">{inv.email}</p>
+                                                                <p className="text-xs text-gray-500 capitalize">{inv.role}</p>
+                                                            </div>
+                                                            <Button
+                                                                variant="destructive"
+                                                                size="sm"
+                                                                onClick={() => removeInvite(idx)}
+                                                            >
+                                                                <Trash className="w-4 h-4 mr-1" />
+                                                                Remove
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-col gap-3">
+                                            <Button
+                                                className="w-full"
+                                                disabled={sendingInvites || loadingStep3}
+                                                onClick={finishSetup}
+                                            >
+                                                {sendingInvites ? "Sending invites..." : "Finish setup"}
+                                            </Button>
+                                            <Button
+                                                className="w-full"
+                                                variant="ghost"
+                                                onClick={skipInvites}
+                                                disabled={sendingInvites || loadingStep3}
+                                            >
+                                                Skip
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
