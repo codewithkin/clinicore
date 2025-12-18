@@ -4,6 +4,7 @@ type SendInvitationEmailParams = {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 };
 
 const transporter = nodemailer.createTransport({
@@ -16,12 +17,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export async function sendInvitationEmail({ to, subject, text }: SendInvitationEmailParams) {
+export async function sendInvitationEmail({ to, subject, text, html }: SendInvitationEmailParams) {
   await transporter.sendMail({
     from: `"Clinicore" <${process.env.MAIL_USER}>`,
     to,
     subject,
     text,
+    html,
   });
 }
 

@@ -4,6 +4,7 @@ type SendVerificationEmailParams = {
     to: string;
     subject: string;
     text: string;
+    html?: string;
 };
 
 const transporter = nodemailer.createTransport({
@@ -20,11 +21,13 @@ export async function sendVerificationEmail({
     to,
     subject,
     text,
+    html,
 }: SendVerificationEmailParams) {
     await transporter.sendMail({
         from: `"Clinicore" <${process.env.MAIL_USER}>`,
         to,
         subject,
         text,
+        html,
     });
 }
