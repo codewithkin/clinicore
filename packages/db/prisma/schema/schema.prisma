@@ -15,6 +15,7 @@ model User {
   emailVerified Boolean
   image         String?
   plan          String?
+  wanted_plan   String?
   createdAt     DateTime
   updatedAt     DateTime
   sessions      Session[]
