@@ -74,3 +74,9 @@ If you did not create an account, you can safely ignore this email.`,
     nextCookies(),
   ],
 });
+
+export const yearlyPlans = {
+  starter: 312,
+  small_clinic: 550,
+  growing_clinic: 1020,
+};

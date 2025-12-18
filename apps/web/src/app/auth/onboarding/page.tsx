@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { CheckCircle, Upload, ArrowLeft, Camera, Check, Stethoscope, Users, Database, Mail, X, Info } from "lucide-react";
+import { CheckCircle, Upload, ArrowLeft, Camera, Check, Stethoscope, Users, Database, Mail, X, Info, Trash } from "lucide-react";
 import { uploadLogo } from "@/lib/s3Client";
-import plans, { type PlanId } from "@/data/plans";
+import plans, { type PlanId, type Plan } from "@/data/plans";
+import { Badge } from "@/components/ui/badge";
 
 /* ---------------------------------------------
    Component
@@ -43,6 +45,11 @@ export default function Onboarding() {
     // Plan state
     const [selectedPlan, setSelectedPlan] = useState<PlanId | null>("starter");
     const [modalPlan, setModalPlan] = useState<Plan | null>(null);
+    const [isYearly, setIsYearly] = useState(false);
+
+    const toggleYearly = () => {
+        setIsYearly(!isYearly);
+    };
 
     // Invite state (step 3)
     const [inviteEmail, setInviteEmail] = useState("");
@@ -167,30 +174,13 @@ export default function Onboarding() {
     ---------------------------------------------- */
 
     async function finishSetup() {
-        if (!selectedPlan) return;
-
-        const productMap: Record<PlanId, string> = {
-            starter: process.env.NEXT_PUBLIC_POLAR_STARTER_PRODUCT_ID!,
-            small_clinic: process.env.NEXT_PUBLIC_POLAR_SMALL_CLINIC_PRODUCT_ID!,
-            growing_clinic: process.env.NEXT_PUBLIC_POLAR_GROWING_CLINIC_PRODUCT_ID!,
-        };
-
         // Send invites if any
         if (invites.length > 0) {
             await sendInvites();
         }
 
-        // Proceed to checkout
-        const { data, error } = await authClient.checkout({
-            products: [productMap[selectedPlan]],
-        });
-
-        if (error || !data?.url) {
-            toast.error("Failed to start checkout");
-            return;
-        }
-
-        window.location.href = data.url;
+        // Redirect to dashboard
+        router.push("/dashboard");
     }
 
     async function skipInvites() {
@@ -424,70 +414,93 @@ export default function Onboarding() {
                                 Choose a plan
                             </h1>
 
+                            <div className="flex items-center space-x-2 mb-4">
+                                <Switch
+                                    id="yearly-pricing-toggle"
+                                    checked={isYearly}
+                                    onCheckedChange={setIsYearly}
+                                />
+                                <Label htmlFor="yearly-pricing-toggle">
+                                    Yearly Pricing
+                                </Label>
+                            </div>
+
                             <div className="grid gap-4">
-                                {plans.map((plan) => (
-                                    <div
-                                        key={plan.id}
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={() => setSelectedPlan(plan.id)}
-                                        onDoubleClick={() => setModalPlan(plan)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter" || e.key === " ") {
-                                                e.preventDefault();
-                                                setSelectedPlan(plan.id);
-                                            }
-                                        }}
-                                        className={`border rounded-xl p-5 text-left transition-all ${selectedPlan === plan.id
-                                            ? "border-teal-500 bg-teal-50/50"
-                                            : "border-gray-200 hover:border-gray-300"
-                                            }`}
-                                    >
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-semibold text-lg">
-                                                        {plan.name}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => setModalPlan(plan)}
-                                                        className="text-gray-500 hover:text-gray-700 transition-colors"
-                                                        aria-label={`More info about ${plan.name}`}
-                                                    >
-                                                        <Info className="w-4 h-4" />
-                                                    </button>
+                                {plans.map((plan) => {
+                                    const monthlyTotal = plan.price * 12;
+                                    const savings = Math.max(0, monthlyTotal - plan.yearlyPrice);
+                                    const percentOff = monthlyTotal > 0 ? Math.round((savings / monthlyTotal) * 100) : 0;
+
+                                    return (
+                                        <div
+                                            key={plan.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => setSelectedPlan(plan.id)}
+                                            onDoubleClick={() => setModalPlan(plan)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter" || e.key === " ") {
+                                                    e.preventDefault();
+                                                    setSelectedPlan(plan.id);
+                                                }
+                                            }}
+                                            className={`border rounded-xl p-5 text-left transition-all ${selectedPlan === plan.id
+                                                ? "border-teal-500 bg-teal-50/50"
+                                                : "border-gray-200 hover:border-gray-300"
+                                                }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-semibold text-lg">
+                                                            {plan.name}
+                                                        </span>
+                                                        {isYearly && percentOff > 0 && (
+                                                            <Badge className="ml-2">Save {percentOff}%</Badge>
+                                                        )}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setModalPlan(plan);
+                                                            }}
+                                                            className="text-gray-500 hover:text-gray-700 transition-colors ml-2"
+                                                            aria-label={`More info about ${plan.name}`}
+                                                        >
+                                                            <Info className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="text-2xl font-bold text-green-400 mb-2">
+                                                        ${isYearly ? plan.yearlyPrice.toFixed(2) : plan.price.toFixed(2)}<span className="text-sm font-normal text-gray-500">{isYearly ? '/year' : '/month'}</span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 mb-3">
+                                                        {plan.description}
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Stethoscope className="w-3.5 h-3.5" />
+                                                            {plan.limits.doctors} {plan.limits.doctors === 1 ? 'doctor' : 'doctors'}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Users className="w-3.5 h-3.5" />
+                                                            {plan.limits.patients} patients
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Database className="w-3.5 h-3.5" />
+                                                            {plan.limits.storageGB}GB storage
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="text-2xl font-bold text-green-400 mb-2">
-                                                    ${plan.price}<span className="text-sm font-normal text-gray-500">/month</span>
-                                                </div>
-                                                <p className="text-sm text-gray-600 mb-3">
-                                                    {plan.description}
-                                                </p>
-                                                <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                                                    <span className="flex items-center gap-1.5">
-                                                        <Stethoscope className="w-3.5 h-3.5" />
-                                                        {plan.limits.doctors} {plan.limits.doctors === 1 ? 'doctor' : 'doctors'}
-                                                    </span>
-                                                    <span>•</span>
-                                                    <span className="flex items-center gap-1.5">
-                                                        <Users className="w-3.5 h-3.5" />
-                                                        {plan.limits.patients} patients
-                                                    </span>
-                                                    <span>•</span>
-                                                    <span className="flex items-center gap-1.5">
-                                                        <Database className="w-3.5 h-3.5" />
-                                                        {plan.limits.storageGB}GB storage
-                                                    </span>
-                                                </div>
+                                                {selectedPlan === plan.id && (
+                                                    <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center shrink-0">
+                                                        <Check className="w-4 h-4 text-white" />
+                                                    </div>
+                                                )}
                                             </div>
-                                            {selectedPlan === plan.id && (
-                                                <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center flex-shrink-0">
-                                                    <Check className="w-4 h-4 text-white" />
-                                                </div>
-                                            )}
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             <Button
@@ -520,7 +533,7 @@ export default function Onboarding() {
                                         <div className="flex-1">
                                             <Input
                                                 type="email"
-                                                placeholder="colleague@example.com"
+                                                placeholder="kin@clinicore.space"
                                                 value={inviteEmail}
                                                 onChange={(e) => setInviteEmail(e.target.value)}
                                                 onKeyDown={(e) => e.key === "Enter" && addInvite()}
@@ -534,7 +547,7 @@ export default function Onboarding() {
                                             <option value="doctor">Doctor</option>
                                             <option value="receptionist">Receptionist</option>
                                         </select>
-                                        <Button onClick={addInvite} variant="outline">
+                                        <Button className="text-white" onClick={addInvite} variant="secondary">
                                             Add
                                         </Button>
                                     </div>
@@ -548,10 +561,11 @@ export default function Onboarding() {
                                                         <p className="text-xs text-gray-500 capitalize">{inv.role}</p>
                                                     </div>
                                                     <Button
-                                                        variant="ghost"
+                                                        variant="destructive"
                                                         size="sm"
                                                         onClick={() => removeInvite(idx)}
                                                     >
+                                                        <Trash className="w-4 h-4 mr-1" />
                                                         Remove
                                                     </Button>
                                                 </div>
@@ -619,7 +633,7 @@ export default function Onboarding() {
 
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
                                                 <Stethoscope className="w-4 h-4 text-teal-600" />
                                             </div>
                                             <div>
@@ -629,7 +643,7 @@ export default function Onboarding() {
                                         </div>
 
                                         <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
                                                 <Users className="w-4 h-4 text-teal-600" />
                                             </div>
                                             <div>
@@ -639,7 +653,7 @@ export default function Onboarding() {
                                         </div>
 
                                         <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
                                                 <Users className="w-4 h-4 text-teal-600" />
                                             </div>
                                             <div>
@@ -649,7 +663,7 @@ export default function Onboarding() {
                                         </div>
 
                                         <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
                                                 <Mail className="w-4 h-4 text-teal-600" />
                                             </div>
                                             <div>
@@ -659,7 +673,7 @@ export default function Onboarding() {
                                         </div>
 
                                         <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
                                                 <Database className="w-4 h-4 text-teal-600" />
                                             </div>
                                             <div>
