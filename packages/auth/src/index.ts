@@ -80,3 +80,5 @@ export const yearlyPlans = {
   small_clinic: 550,
   growing_clinic: 1020,
 };
+
+export { sendInvitationEmail } from "./utils/sendInvitationEmail";
