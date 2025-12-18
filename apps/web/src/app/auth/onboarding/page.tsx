@@ -123,9 +123,35 @@ export default function Onboarding() {
             return;
         }
 
+        try {
+            // Update user's plan in database before checkout
+            const response = await fetch('/api/user/update-plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plan: selectedPlan,
+                    planName: plan.name
+                }),
+            });
+
+            if (!response.ok) {
+                toast.error("Failed to update plan");
+                return;
+            }
+        } catch (err) {
+            console.error('Plan update error:', err);
+            toast.error("Failed to update plan");
+            return;
+        }
+
+        // Construct success URL with plan parameter as backup
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+        const successUrl = `${baseUrl}/payments?plan=${encodeURIComponent(plan.name)}`;
+
         // Initiate checkout
         const { data, error } = await authClient.checkout({
             products: [plan.productId],
+            successUrl: successUrl,
         });
 
         if (error || !data?.url) {
@@ -469,7 +495,7 @@ export default function Onboarding() {
                                 disabled={!selectedPlan}
                                 onClick={proceedToInvites}
                             >
-                                Next
+                                Start 3 day trial
                             </Button>
                         </motion.div>
                     )}
@@ -651,7 +677,7 @@ export default function Onboarding() {
                                         setModalPlan(null);
                                     }}
                                 >
-                                    Select {modalPlan.name}
+                                    Select and start free trial
                                 </Button>
                             </motion.div>
                         </>
