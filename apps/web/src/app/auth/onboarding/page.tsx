@@ -46,6 +46,7 @@ export default function Onboarding() {
     const [selectedPlan, setSelectedPlan] = useState<PlanId | null>("starter");
     const [modalPlan, setModalPlan] = useState<Plan | null>(null);
     const [isYearly, setIsYearly] = useState(false);
+    const [startingCheckout, setStartingCheckout] = useState(false);
 
     const toggleYearly = () => {
         setIsYearly(!isYearly);
@@ -124,9 +125,29 @@ export default function Onboarding() {
     async function proceedToInvites() {
         if (!selectedPlan) return;
 
+        setStartingCheckout(true);
+
         const plan = plans.find(p => p.id === selectedPlan);
-        if (!plan?.productId) {
+        if (!plan) {
             toast.error("Invalid plan selected");
+            return;
+        }
+
+        // determine product id for checkout depending on monthly/yearly selection
+        let productId = "";
+        if (isYearly) {
+            if (plan.id === "starter") productId = process.env.NEXT_PUBLIC_POLAR_YEARLY_STARTER_PRODUCT_ID ?? "";
+            if (plan.id === "small_clinic") productId = process.env.NEXT_PUBLIC_POLAR_YEARLY_SMALL_CLINIC_PRODUCT_ID ?? "";
+            if (plan.id === "growing_clinic") productId = process.env.NEXT_PUBLIC_POLAR_YEARLY_GROWING_CLINIC_PRODUCT_ID ?? "";
+        } else {
+            if (plan.id === "starter") productId = process.env.NEXT_PUBLIC_POLAR_MONTHLY_STARTER_PRODUCT_ID ?? "";
+            if (plan.id === "small_clinic") productId = process.env.NEXT_PUBLIC_POLAR_MONTHLY_SMALL_CLINIC_PRODUCT_ID ?? "";
+            if (plan.id === "growing_clinic") productId = process.env.NEXT_PUBLIC_POLAR_MONTHLY_GROWING_CLINIC_PRODUCT_ID ?? "";
+        }
+
+        if (!productId) {
+            toast.error("Invalid plan selected");
+            setStartingCheckout(false);
             return;
         }
 
@@ -156,17 +177,25 @@ export default function Onboarding() {
         const successUrl = `${baseUrl}/payments?plan=${encodeURIComponent(plan.name)}`;
 
         // Initiate checkout
-        const { data, error } = await authClient.checkout({
-            products: [plan.productId],
-            successUrl: successUrl,
-        });
+        try {
+            const { data, error } = await authClient.checkout({
+                products: [productId],
+                successUrl: successUrl,
+            });
 
-        if (error || !data?.url) {
-            toast.error("Failed to start checkout");
-            return;
+            if (error || !data?.url) {
+                toast.error("Failed to start checkout");
+                setStartingCheckout(false);
+                return;
+            }
+
+            // use Next.js router for redirect
+            router.push(data.url);
+        } catch (e) {
+            console.error('Checkout error', e);
+            toast.error('Failed to start checkout');
+            setStartingCheckout(false);
         }
-
-        window.location.href = data.url;
     }
 
     /* ---------------------------------------------
@@ -505,10 +534,10 @@ export default function Onboarding() {
 
                             <Button
                                 className="w-full mt-6"
-                                disabled={!selectedPlan}
+                                disabled={!selectedPlan || startingCheckout}
                                 onClick={proceedToInvites}
                             >
-                                Start 3 day trial
+                                {startingCheckout ? 'Starting checkout...' : 'Start 3 day trial'}
                             </Button>
                         </motion.div>
                     )}
