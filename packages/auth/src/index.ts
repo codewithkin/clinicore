@@ -6,6 +6,7 @@ import { polarClient } from "./lib/payments";
 import prisma from "@my-better-t-app/db";
 import { organization } from "better-auth/plugins/organization";
 import { sendVerificationEmail } from "./utils/sendVerificationEmail";
+import { sendInvitationEmail } from "./utils/sendInvitationEmail";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -40,8 +41,28 @@ If you did not create an account, you can safely ignore this email.`,
   },
 
   plugins: [
-    // Organization plugin
-    organization(),
+    // Organization plugin with invitation email
+    organization({
+      async sendInvitationEmail(data) {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+        const inviteLink = `${baseUrl}/accept-invitation/${data.id}`;
+
+        await sendInvitationEmail({
+          to: data.email,
+          subject: "You're invited to join Clinicore",
+          text: `Hi,
+
+You have been invited to join ${data.organization.name} on Clinicore.
+
+Invited by: ${data.inviter.user.name} (${data.inviter.user.email})
+Team: ${data.organization.name}
+
+Accept your invitation: ${inviteLink}
+
+If you weren't expecting this, you can ignore this email.`,
+        });
+      },
+    }),
 
     // Polar payment integration
     polar({
