@@ -52,19 +52,19 @@ If you did not create an account, you can safely ignore this email.`,
         checkout({
           products: [
             {
-              productId: process.env.NEXT_PUBLIC_POLAR_STARTER_PRODUCT_ID || "",
-              slug: process.env.NEXT_PUBLIC_POLAR_STARTER_PRODUCT_SLUG || "",
+              productId: process.env.POLAR_STARTER_PRODUCT_ID || "",
+              slug: process.env.POLAR_STARTER_PRODUCT_SLUG || "",
             },
             {
-              productId: process.env.NEXT_PUBLIC_POLAR_SMALL_CLINIC_PRODUCT_ID || "",
-              slug: process.env.NEXT_PUBLIC_POLAR_SMALL_CLINIC_PRODUCT_SLUG || "",
+              productId: process.env.POLAR_SMALL_CLINIC_PRODUCT_ID || "",
+              slug: process.env.POLAR_SMALL_CLINIC_PRODUCT_SLUG || "",
             },
             {
-              productId: process.env.NEXT_PUBLIC_POLAR_GROWING_CLINIC_PRODUCT_ID || "",
-              slug: process.env.NEXT_PUBLIC_POLAR_GROWING_CLINIC_PRODUCT_SLUG || "",
+              productId: process.env.POLAR_GROWING_CLINIC_PRODUCT_ID || "",
+              slug: process.env.POLAR_GROWING_CLINIC_PRODUCT_SLUG || "",
             },
           ],
-          successUrl: process.env.NEXT_PUBLIC_POLAR_SUCCESS_URL || "",
+          successUrl: process.env.NEXT_PUBLIC_POLAR_SUCCESS_URL,
           authenticatedUsersOnly: true,
         }),
         portal(),
