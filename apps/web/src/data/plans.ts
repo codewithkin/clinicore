@@ -5,6 +5,7 @@ export interface Plan {
   name: string;
   description: string;
   price: number;
+  yearlyPrice: number;
   perAdditionalSeat: number;
   productId: string;
   limits: {
@@ -22,6 +23,7 @@ const plans: Plan[] = [
     name: "Starter",
     description: "For one doctor starting out",
     price: 29.99,
+    yearlyPrice: 312,
     perAdditionalSeat: 15,
     productId: process.env.NEXT_PUBLIC_POLAR_STARTER_PRODUCT_ID || "",
     limits: {
@@ -37,6 +39,7 @@ const plans: Plan[] = [
     name: "Small Clinic",
     description: "For small clinics with a few doctors",
     price: 49.99,
+    yearlyPrice: 550,
     perAdditionalSeat: 15,
     productId: process.env.NEXT_PUBLIC_POLAR_SMALL_CLINIC_PRODUCT_ID || "",
     limits: {
@@ -52,6 +55,7 @@ const plans: Plan[] = [
     name: "Growing Clinic",
     description: "For larger clinics with many doctors",
     price: 99.99,
+    yearlyPrice: 1020,
     perAdditionalSeat: 15,
     productId: process.env.NEXT_PUBLIC_POLAR_GROWING_CLINIC_PRODUCT_ID || "",
     limits: {
