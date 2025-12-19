@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { CheckCircle, Upload, ArrowLeft, Camera, Check, Stethoscope, Users, Database, Mail, X, Info, Trash } from "lucide-react";
+import { CheckCircle, Upload, ArrowLeft, Camera, Check, Stethoscope, Users, Database, Mail, X, Info, Trash, Loader2 } from "lucide-react";
 import { uploadLogo } from "@/lib/s3Client";
 import plans, { type PlanId, type Plan } from "@/data/plans";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,50 @@ export default function Onboarding() {
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const searchParams = useSearchParams();
     const router = useRouter();
+    const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+
+    // Check if user should be redirected before showing onboarding
+    useEffect(() => {
+        if (!session?.user) return;
+
+        let cancelled = false;
+        const checkOnboardingStatus = async () => {
+            try {
+                const res = await fetch("/api/user/onboarding-check");
+                if (!res.ok) {
+                    console.error("Failed to check onboarding status");
+                    setCheckingOnboarding(false);
+                    return;
+                }
+
+                const data = await res.json();
+                if (cancelled) return;
+
+                // Priority 1: Redirect to accept invitation if one exists
+                if (data.hasPendingInvitation && data.invitationId) {
+                    router.replace(`/accept-invitation/${data.invitationId}`);
+                    return;
+                }
+
+                // Priority 2: Redirect to dashboard if already a member
+                if (data.isOrgMember) {
+                    router.replace("/dashboard");
+                    return;
+                }
+
+                // Otherwise, proceed with onboarding
+                setCheckingOnboarding(false);
+            } catch (err) {
+                console.error("Onboarding check error", err);
+                setCheckingOnboarding(false);
+            }
+        };
+
+        void checkOnboardingStatus();
+        return () => {
+            cancelled = true;
+        };
+    }, [session?.user, router]);
 
     useEffect(() => {
         const s = searchParams.get("step");
@@ -360,6 +404,18 @@ export default function Onboarding() {
     /* ---------------------------------------------
        Render
     ---------------------------------------------- */
+
+    // Show loader while checking onboarding status
+    if (checkingOnboarding) {
+        return (
+            <section className="min-h-screen flex items-center justify-center px-4">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 text-green-500 animate-spin" />
+                    <p className="text-sm text-gray-500">Checking your account...</p>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="min-h-screen flex items-center justify-center px-4">
