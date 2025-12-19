@@ -10,9 +10,12 @@ import { useMutation } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirect = searchParams.get("redirect") || "/dashboard";
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -23,7 +26,7 @@ export default function SignInPage() {
                 {
                     email,
                     password,
-                    callbackURL: "/dashboard",
+                    callbackURL: redirect,
                     rememberMe: true,
                 },
                 {
@@ -49,7 +52,7 @@ export default function SignInPage() {
 
         onSuccess: () => {
             toast.success("Signed in successfully");
-            router.replace("/dashboard");
+            router.replace(redirect || "/dashboard");
         },
 
         onError: (error: Error) => {

@@ -324,7 +324,7 @@ export default function Onboarding() {
                     // @ts-ignore
                     if (authClient.organization.inviteMember) {
                         // @ts-ignore
-                        await authClient.organization.inviteMember({ email: inv.email, role: inv.role });
+                        await authClient.organization.inviteMember({ email: inv.email, role: inv.role, resend: true });
                         toast.success(`Invited ${inv.email}`);
                         continue;
                     }
