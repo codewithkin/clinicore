@@ -26,10 +26,11 @@ export default function Onboarding() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+    const [onboardingInitiated, setOnboardingInitiated] = useState(false);
 
-    // Check if user should be redirected before showing onboarding
+    // Check if user should be redirected before showing onboarding (only once)
     useEffect(() => {
-        if (!session?.user) return;
+        if (!session?.user || onboardingInitiated) return;
 
         let cancelled = false;
         const checkOnboardingStatus = async () => {
@@ -38,6 +39,7 @@ export default function Onboarding() {
                 if (!res.ok) {
                     console.error("Failed to check onboarding status");
                     setCheckingOnboarding(false);
+                    setOnboardingInitiated(true);
                     return;
                 }
 
@@ -50,17 +52,20 @@ export default function Onboarding() {
                     return;
                 }
 
-                // Priority 2: Redirect to dashboard if already a member
-                if (data.isOrgMember) {
+                // Priority 2: Redirect to dashboard if already a member (skip if step param exists)
+                const hasStepParam = searchParams.get("step");
+                if (data.isOrgMember && !hasStepParam) {
                     router.replace("/dashboard");
                     return;
                 }
 
                 // Otherwise, proceed with onboarding
                 setCheckingOnboarding(false);
+                setOnboardingInitiated(true);
             } catch (err) {
                 console.error("Onboarding check error", err);
                 setCheckingOnboarding(false);
+                setOnboardingInitiated(true);
             }
         };
 
@@ -68,7 +73,7 @@ export default function Onboarding() {
         return () => {
             cancelled = true;
         };
-    }, [session?.user, router]);
+    }, [session?.user, router, onboardingInitiated, searchParams]);
 
     useEffect(() => {
         const s = searchParams.get("step");
