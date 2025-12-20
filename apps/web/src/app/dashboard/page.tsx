@@ -225,7 +225,7 @@ export default async function DashboardPage() {
 					</div>
 				</div>
 				<div className="flex gap-3">
-					<QuickActionsClient isAdmin={isAdminUser} />
+					<QuickActionsClient isAdmin={isAdminUser} organizationId={organizationId || undefined} />
 				</div>
 			</div>
 
@@ -290,7 +290,7 @@ export default async function DashboardPage() {
 						<div className="py-12 text-center">
 							<Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
 							<p className="text-gray-500 text-sm">No appointments scheduled for today</p>
-							<ScheduleAppointmentClient />
+							<ScheduleAppointmentClient organizationId={organizationId || undefined} />
 						</div>
 					) : (
 						<div className="overflow-x-auto">

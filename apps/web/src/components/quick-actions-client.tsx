@@ -12,7 +12,7 @@ import { ChevronDown, UserPlus, CalendarPlus, Mail } from "lucide-react";
 import NewPatientModal from "./new-patient-modal";
 import NewAppointmentModal from "./new-appointment-modal";
 
-export default function QuickActionsClient({ isAdmin }: { isAdmin: boolean }) {
+export default function QuickActionsClient({ isAdmin, organizationId }: { isAdmin: boolean; organizationId?: string }) {
     const [openPatient, setOpenPatient] = useState(false);
     const [openAppointment, setOpenAppointment] = useState(false);
 
@@ -48,7 +48,7 @@ export default function QuickActionsClient({ isAdmin }: { isAdmin: boolean }) {
             </DropdownMenu>
 
             <NewPatientModal open={openPatient} onClose={() => setOpenPatient(false)} onCreate={(d) => console.log("patient created", d)} />
-            <NewAppointmentModal open={openAppointment} onClose={() => setOpenAppointment(false)} onCreate={(d) => console.log("appointment created", d)} />
+            <NewAppointmentModal open={openAppointment} onClose={() => setOpenAppointment(false)} onCreate={(d) => console.log("appointment created", d)} organizationId={organizationId} />
         </>
     );
 }

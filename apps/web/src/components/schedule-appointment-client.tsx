@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import NewAppointmentModal from "./new-appointment-modal";
 
-export default function ScheduleAppointmentClient() {
+export default function ScheduleAppointmentClient({ organizationId }: { organizationId?: string }) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -21,6 +21,7 @@ export default function ScheduleAppointmentClient() {
                 onCreate={(payload) => {
                     console.log("create appointment (frontend only):", payload);
                 }}
+                organizationId={organizationId}
             />
         </>
     );
