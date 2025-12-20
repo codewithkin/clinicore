@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 
 type Props = {
     open: boolean;
@@ -32,12 +34,12 @@ export default function NewPatientModal({ open, onClose, onCreate }: Props) {
                 <h3 className="text-lg font-semibold mb-4">New Patient</h3>
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="flex gap-2">
-                        <input required value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First name" className="flex-1 px-3 py-2 border rounded" />
-                        <input required value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name" className="flex-1 px-3 py-2 border rounded" />
+                        <Input required value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First name" className="flex-1" />
+                        <Input required value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name" className="flex-1" />
                     </div>
-                    <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full px-3 py-2 border rounded" />
-                    <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone" className="w-full px-3 py-2 border rounded" />
-                    <input type="date" value={dob} onChange={e => setDob(e.target.value)} className="w-full px-3 py-2 border rounded" />
+                    <Input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full" />
+                    <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone" className="w-full" />
+                    <DatePicker value={dob} onChange={setDob} mode="date" className="w-full" />
                     <div className="flex justify-end gap-2 mt-3">
                         <Button type="button" variant="outline" onClick={onClose} className="px-4 py-2">Cancel</Button>
                         <Button type="submit" className="px-4 py-2">Create</Button>
