@@ -24,6 +24,8 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
     const [doctorName, setDoctorName] = useState("");
     const [time, setTime] = useState("");
     const [type, setType] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         if (open && organizationId) {
@@ -36,15 +38,41 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
 
     if (!open) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!patientId) {
-            alert("Please select a patient");
+            setError("Please select a patient");
             return;
         }
-        const payload = { patientId, doctorName, time, type };
-        onCreate?.(payload);
-        onClose();
+        setLoading(true);
+        setError("");
+
+        try {
+            const payload = { patientId, doctorName, time, type };
+            const response = await fetch("/api/appointments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Failed to create appointment");
+            }
+
+            const data = await response.json();
+            onCreate?.(data.appointment);
+            onClose();
+            // Reset form
+            setPatientId("");
+            setDoctorName("");
+            setTime("");
+            setType("");
+        } catch (err: any) {
+            setError(err.message || "Failed to create appointment");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -52,6 +80,7 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
             <div className="absolute inset-0 bg-black/40" onClick={onClose} />
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">New Appointment</h3>
+                {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2 mb-3">{error}</div>}
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="w-full">
                         <label className="text-sm font-medium text-gray-700 mb-1 block">Patient</label>
@@ -73,8 +102,8 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
                     <DatePicker required value={time} onChange={setTime} mode="datetime-local" className="w-full" />
                     <Input value={type} onChange={e => setType(e.target.value)} placeholder="Type (e.g., Consultation)" className="w-full" />
                     <div className="flex justify-end gap-2 mt-3">
-                        <Button type="button" variant="outline" onClick={onClose} className="px-4 py-2">Cancel</Button>
-                        <Button type="submit" className="px-4 py-2">Create</Button>
+                        <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="px-4 py-2">Cancel</Button>
+                        <Button type="submit" disabled={loading} className="px-4 py-2">{loading ? "Creating..." : "Create"}</Button>
                     </div>
                 </form>
             </div>

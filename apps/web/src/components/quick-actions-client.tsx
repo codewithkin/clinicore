@@ -47,7 +47,7 @@ export default function QuickActionsClient({ isAdmin, organizationId }: { isAdmi
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <NewPatientModal open={openPatient} onClose={() => setOpenPatient(false)} onCreate={(d) => console.log("patient created", d)} />
+            <NewPatientModal open={openPatient} onClose={() => setOpenPatient(false)} onCreate={(d) => console.log("patient created", d)} organizationId={organizationId} />
             <NewAppointmentModal open={openAppointment} onClose={() => setOpenAppointment(false)} onCreate={(d) => console.log("appointment created", d)} organizationId={organizationId} />
         </>
     );
