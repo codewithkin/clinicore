@@ -113,3 +113,34 @@ model Invitation {
 
   @@map("invitation")
 }
+
+model Patient {
+  id             String        @id @default(cuid())
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String?
+  dateOfBirth    DateTime?
+  address        String?
+  organizationId String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  appointments   Appointment[]
+
+  @@map("patient")
+}
+
+model Appointment {
+  id         String   @id @default(cuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorName String
+  time       DateTime
+  type       String
+  status     String   @default("scheduled")
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("appointment")
+}
