@@ -4,6 +4,13 @@ import { auth } from "@my-better-t-app/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+	DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
 	Users,
 	Calendar,
 	DollarSign,
@@ -11,7 +18,11 @@ import {
 	Clock,
 	ArrowUpRight,
 	UserCheck,
-	UserCog
+	UserCog,
+	ChevronDown,
+	UserPlus,
+	CalendarPlus,
+	Mail
 } from "lucide-react";
 import { getUserRole, isAdmin, getUserOrganization } from "@/lib/dashboard-helpers";
 import { formatPrice } from "@/lib/formatters";
@@ -212,10 +223,34 @@ export default async function DashboardPage() {
 					</div>
 				</div>
 				<div className="flex gap-3">
-					<button className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors flex items-center gap-2">
-						<span className="text-lg">+</span>
-						Add Patient
-					</button>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<button className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors flex items-center gap-2">
+								<span className="text-lg">+</span>
+								Quick Actions
+								<ChevronDown className="h-4 w-4" />
+							</button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="w-56">
+							<DropdownMenuItem className="cursor-pointer">
+								<UserPlus className="mr-2 h-4 w-4" />
+								<span>Add Patient</span>
+							</DropdownMenuItem>
+							<DropdownMenuItem className="cursor-pointer">
+								<CalendarPlus className="mr-2 h-4 w-4" />
+								<span>Create Appointment</span>
+							</DropdownMenuItem>
+							{isAdminUser && (
+								<>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem className="cursor-pointer">
+										<Mail className="mr-2 h-4 w-4" />
+										<span>Invite User</span>
+									</DropdownMenuItem>
+								</>
+							)}
+						</DropdownMenuContent>
+					</DropdownMenu>
 				</div>
 			</div>
 
