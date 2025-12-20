@@ -13,23 +13,21 @@ import {
 	UserCheck,
 	UserCog
 } from "lucide-react";
-import { db } from "@my-better-t-app/db";
-
-// Helper function to get user's role
-async function getUserRole(userId: string, organizationId: string): Promise<string> {
-	const member = await db.member.findFirst({
-		where: {
-			userId,
-			organizationId,
-		},
-	});
-	return member?.role || "receptionist";
-}
-
-// Helper function to check if user is admin
-function isAdmin(role: string): boolean {
-	return role === "admin" || role === "doctor";
-}
+import { getUserRole, isAdmin, getUserOrganization } from "@/lib/dashboard-helpers";
+import { formatPrice } from "@/lib/formatters";
+import { getStartOfToday, getStartOfTomorrow } from "@/utils/date-helpers";
+import {
+	getTotalPatients,
+	getPatientsFromMonthsAgo,
+	getRecentPatients,
+	getTodayAppointmentsCount,
+	getPendingAppointmentsCount,
+	getPendingCheckIns,
+	getStaffCount,
+	getTodayAppointments,
+	calculateGrowthPercentage,
+	getMonthlyRevenue,
+} from "@/utils/dashboard-stats";
 
 export default async function DashboardPage() {
 	const session = await auth.api.getSession({
@@ -40,121 +38,43 @@ export default async function DashboardPage() {
 		redirect("/auth/signup");
 	}
 
-	// Get first organization the user is a member of
-	const firstMembership = await db.member.findFirst({
-		where: {
-			userId: session.user.id
-		},
-		include: {
-			organization: true
-		}
-	});
-
-	const organizationId = firstMembership?.organizationId || null;
-
-	// Get user's role within the organization
+	// Get user's organization and role
+	const organizationId = await getUserOrganization(session.user.id);
 	const userRole = organizationId
 		? await getUserRole(session.user.id, organizationId)
 		: "receptionist";
 
 	const isAdminUser = isAdmin(userRole);
 
-	// Fetch dashboard data
-	const today = new Date();
-	today.setHours(0, 0, 0, 0);
-	const tomorrow = new Date(today);
-	tomorrow.setDate(tomorrow.getDate() + 1);
-
-	const lastMonth = new Date();
-	lastMonth.setMonth(lastMonth.getMonth() - 1);
-
-	const lastWeek = new Date();
-	lastWeek.setDate(lastWeek.getDate() - 7);
-
+	// Date helpers
+	const today = getStartOfToday();
+	const tomorrow = getStartOfTomorrow();
 	const now = new Date();
 
-	// Get stats
-	const totalPatients = await db.patient.count();
-	const lastMonthPatients = await db.patient.count({
-		where: {
-			createdAt: {
-				lt: lastMonth,
-			},
-		},
-	});
+	// Get dashboard statistics
+	const totalPatients = await getTotalPatients(organizationId);
+	const lastMonthPatients = await getPatientsFromMonthsAgo(1, organizationId);
+	const recentPatients = await getRecentPatients(1, organizationId);
+	const todayAppointmentsCount = await getTodayAppointmentsCount(organizationId);
+	const pendingAppointmentsCount = await getPendingAppointmentsCount(organizationId);
+	const pendingCheckIns = await getPendingCheckIns(organizationId);
 
-	const recentPatients = await db.patient.count({
-		where: {
-			createdAt: {
-				gte: lastWeek,
-			},
-		},
-	});
-
-	const todayAppointmentsCount = await db.appointment.count({
-		where: {
-			time: {
-				gte: today,
-				lt: tomorrow,
-			},
-		},
-	});
-
-	const pendingAppointmentsCount = await db.appointment.count({
-		where: {
-			time: {
-				gte: today,
-				lt: tomorrow,
-			},
-			status: "scheduled",
-		},
-	});
-
-	// Calculate pending check-ins (scheduled appointments that should have started)
-	const pendingCheckIns = await db.appointment.count({
-		where: {
-			time: {
-				gte: today,
-				lt: now,
-			},
-			status: "scheduled",
-		},
-	});
-
-	// Get staff count (admin only)
+	// Get staff count and revenue (admin only)
 	let activeStaffCount = 0;
+	let monthlyRevenue = 0;
 	if (isAdminUser && organizationId) {
-		activeStaffCount = await db.member.count({
-			where: {
-				organizationId,
-			},
-		});
+		activeStaffCount = await getStaffCount(organizationId);
+		monthlyRevenue = await getMonthlyRevenue(organizationId);
 	}
 
 	// Get today's appointments
-	const appointments = await db.appointment.findMany({
-		where: {
-			time: {
-				gte: today,
-				lt: tomorrow,
-			},
-		},
-		include: {
-			patient: true,
-		},
-		orderBy: {
-			time: "asc",
-		},
-		take: 10,
-	});
+	const appointments = await getTodayAppointments(organizationId, 10);
 
 	// Get next appointment time for receptionist
 	const nextAppointment = appointments.find(apt => new Date(apt.time) > now);
 
 	// Calculate patient growth
-	const patientGrowth = lastMonthPatients > 0
-		? ((totalPatients - lastMonthPatients) / lastMonthPatients * 100).toFixed(0)
-		: "0";
+	const patientGrowth = calculateGrowthPercentage(totalPatients, lastMonthPatients);
 
 	// Role-based stats configuration
 	const statsData = isAdminUser
@@ -181,7 +101,7 @@ export default async function DashboardPage() {
 			},
 			{
 				title: "Monthly Revenue",
-				value: "$45,230",
+				value: formatPrice(monthlyRevenue),
 				change: "+18% from last month",
 				trend: "up" as const,
 				icon: DollarSign,
@@ -270,11 +190,6 @@ export default async function DashboardPage() {
 					</p>
 				</div>
 				<div className="flex gap-3">
-					{isAdminUser && (
-						<button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-							View Reports
-						</button>
-					)}
 					<button className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors flex items-center gap-2">
 						<span className="text-lg">+</span>
 						Add Patient
