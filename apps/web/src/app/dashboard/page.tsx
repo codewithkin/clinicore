@@ -1,71 +1,35 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@my-better-t-app/auth";
-import { authClient } from "@/lib/auth-client";
-import ActiveOrganizationClient from "@/components/active-organization-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
 	Users,
 	Calendar,
 	DollarSign,
-	Activity,
 	TrendingUp,
 	Clock,
-	ArrowUpRight
+	ArrowUpRight,
+	UserCheck,
+	UserCog
 } from "lucide-react";
 import { db } from "@my-better-t-app/db";
 
-const recentAppointments = [
-	{
-		id: 1,
-		patient: "Sarah Johnson",
-		doctor: "Dr. Smith",
-		time: "09:00 AM",
-		type: "Consultation",
-		status: "Completed"
-	},
-	{
-		id: 2,
-		patient: "Michael Chen",
-		doctor: "Dr. Williams",
-		time: "09:30 AM",
-		type: "Follow-up",
-		status: "Completed"
-	},
-	{
-		id: 3,
-		patient: "Emma Davis",
-		doctor: "Dr. Smith",
-		time: "10:00 AM",
-		type: "Check-up",
-		status: "In Progress"
-	},
-	{
-		id: 4,
-		patient: "James Wilson",
-		doctor: "Dr. Brown",
-		time: "10:30 AM",
-		type: "Consultation",
-		status: "Scheduled"
-	},
-	{
-		id: 5,
-		patient: "Olivia Martinez",
-		doctor: "Dr. Williams",
-		time: "11:00 AM",
-		type: "Treatment",
-		status: "Scheduled"
-	},
-	{
-		id: 6,
-		patient: "Noah Anderson",
-		doctor: "Dr. Smith",
-		time: "11:30 AM",
-		type: "Follow-up",
-		status: "Scheduled"
-	}
-];
+// Helper function to get user's role
+async function getUserRole(userId: string, organizationId: string): Promise<string> {
+	const member = await db.member.findFirst({
+		where: {
+			userId,
+			organizationId,
+		},
+	});
+	return member?.role || "receptionist";
+}
+
+// Helper function to check if user is admin
+function isAdmin(role: string): boolean {
+	return role === "admin" || role === "doctor";
+}
 
 export default async function DashboardPage() {
 	const session = await auth.api.getSession({
@@ -76,27 +40,24 @@ export default async function DashboardPage() {
 		redirect("/auth/signup");
 	}
 
-	// Fetch active organization server-side (if available) and log it
-	try {
-		// some SDKs return { data, error } shape, others return data directly
-		const orgResult: any = await authClient.organization.getFullOrganization?.({
-			fetchOptions: {
-				headers: await headers(),
-			},
-		});
-
-		const orgData = orgResult?.data ?? orgResult;
-		const org = orgData?.organization ?? orgData?.organization?.id ? orgData.organization : orgData;
-		console.log("Server: active organization:", org);
-	} catch (err) {
-		console.error("Failed to load organization server-side", err);
-	}
-
-	const { data: customerState } = await authClient.customer.state({
-		fetchOptions: {
-			headers: await headers(),
+	// Get first organization the user is a member of
+	const firstMembership = await db.member.findFirst({
+		where: {
+			userId: session.user.id
 		},
+		include: {
+			organization: true
+		}
 	});
+
+	const organizationId = firstMembership?.organizationId || null;
+
+	// Get user's role within the organization
+	const userRole = organizationId
+		? await getUserRole(session.user.id, organizationId)
+		: "receptionist";
+
+	const isAdminUser = isAdmin(userRole);
 
 	// Fetch dashboard data
 	const today = new Date();
@@ -107,12 +68,25 @@ export default async function DashboardPage() {
 	const lastMonth = new Date();
 	lastMonth.setMonth(lastMonth.getMonth() - 1);
 
+	const lastWeek = new Date();
+	lastWeek.setDate(lastWeek.getDate() - 7);
+
+	const now = new Date();
+
 	// Get stats
 	const totalPatients = await db.patient.count();
 	const lastMonthPatients = await db.patient.count({
 		where: {
 			createdAt: {
 				lt: lastMonth,
+			},
+		},
+	});
+
+	const recentPatients = await db.patient.count({
+		where: {
+			createdAt: {
+				gte: lastWeek,
 			},
 		},
 	});
@@ -136,6 +110,27 @@ export default async function DashboardPage() {
 		},
 	});
 
+	// Calculate pending check-ins (scheduled appointments that should have started)
+	const pendingCheckIns = await db.appointment.count({
+		where: {
+			time: {
+				gte: today,
+				lt: now,
+			},
+			status: "scheduled",
+		},
+	});
+
+	// Get staff count (admin only)
+	let activeStaffCount = 0;
+	if (isAdminUser && organizationId) {
+		activeStaffCount = await db.member.count({
+			where: {
+				organizationId,
+			},
+		});
+	}
+
 	// Get today's appointments
 	const appointments = await db.appointment.findMany({
 		where: {
@@ -153,53 +148,92 @@ export default async function DashboardPage() {
 		take: 10,
 	});
 
+	// Get next appointment time for receptionist
+	const nextAppointment = appointments.find(apt => new Date(apt.time) > now);
+
 	// Calculate patient growth
 	const patientGrowth = lastMonthPatients > 0
 		? ((totalPatients - lastMonthPatients) / lastMonthPatients * 100).toFixed(0)
 		: "0";
 
-	const statsData = [
-		{
-			title: "Total Patients",
-			value: totalPatients.toLocaleString(),
-			change: `+${patientGrowth}% from last month`,
-			trend: "up",
-			icon: Users,
-			color: "text-white",
-			bgColor: "bg-teal-600",
-			borderColor: "border-teal-600"
-		},
-		{
-			title: "Appointments Today",
-			value: todayAppointmentsCount.toString(),
-			change: `${pendingAppointmentsCount} pending confirmation`,
-			trend: "neutral",
-			icon: Calendar,
-			color: "text-gray-700",
-			bgColor: "bg-white",
-			borderColor: "border-gray-200"
-		},
-		{
-			title: "Monthly Revenue",
-			value: "$45,230",
-			change: "+18% from last month",
-			trend: "up",
-			icon: DollarSign,
-			color: "text-gray-700",
-			bgColor: "bg-white",
-			borderColor: "border-gray-200"
-		},
-		{
-			title: "Active Sessions",
-			value: "8",
-			change: "2 doctors available",
-			trend: "neutral",
-			icon: Activity,
-			color: "text-gray-700",
-			bgColor: "bg-white",
-			borderColor: "border-gray-200"
-		}
-	];
+	// Role-based stats configuration
+	const statsData = isAdminUser
+		? [
+			{
+				title: "Total Patients",
+				value: totalPatients.toLocaleString(),
+				change: `+${patientGrowth}% from last month`,
+				trend: "up" as const,
+				icon: Users,
+				color: "text-white",
+				bgColor: "bg-teal-600",
+				borderColor: "border-teal-600"
+			},
+			{
+				title: "Appointments Today",
+				value: todayAppointmentsCount.toString(),
+				change: `${pendingAppointmentsCount} pending confirmation`,
+				trend: "neutral" as const,
+				icon: Calendar,
+				color: "text-gray-700",
+				bgColor: "bg-white",
+				borderColor: "border-gray-200"
+			},
+			{
+				title: "Monthly Revenue",
+				value: "$45,230",
+				change: "+18% from last month",
+				trend: "up" as const,
+				icon: DollarSign,
+				color: "text-gray-700",
+				bgColor: "bg-white",
+				borderColor: "border-gray-200"
+			},
+			{
+				title: "Active Staff",
+				value: activeStaffCount.toString(),
+				change: "Total staff members",
+				trend: "neutral" as const,
+				icon: UserCog,
+				color: "text-gray-700",
+				bgColor: "bg-white",
+				borderColor: "border-gray-200"
+			}
+		]
+		: [
+			{
+				title: "Today's Appointments",
+				value: todayAppointmentsCount.toString(),
+				change: nextAppointment
+					? `Next at ${new Date(nextAppointment.time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`
+					: "No more today",
+				trend: "neutral" as const,
+				icon: Calendar,
+				color: "text-white",
+				bgColor: "bg-teal-600",
+				borderColor: "border-teal-600"
+			},
+			{
+				title: "Pending Check-ins",
+				value: pendingCheckIns.toString(),
+				change: pendingCheckIns > 0 ? "Overdue check-ins" : "All checked in",
+				trend: "neutral" as const,
+				icon: UserCheck,
+				color: "text-gray-700",
+				bgColor: "bg-white",
+				borderColor: "border-gray-200"
+			},
+			{
+				title: "Total Patients",
+				value: totalPatients.toLocaleString(),
+				change: `${recentPatients} registered this week`,
+				trend: "neutral" as const,
+				icon: Users,
+				color: "text-gray-700",
+				bgColor: "bg-white",
+				borderColor: "border-gray-200"
+			}
+		];
 
 	const getStatusColor = (status: string) => {
 		switch (status.toLowerCase()) {
@@ -223,13 +257,24 @@ export default async function DashboardPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-					<p className="text-gray-500 mt-1">Plan, prioritize, and accomplish your tasks with ease.</p>
+					<div className="flex items-center gap-3">
+						<h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+						<Badge className="text-xs">
+							{isAdminUser ? "Admin" : "Receptionist"}
+						</Badge>
+					</div>
+					<p className="text-gray-500 mt-1">
+						{isAdminUser
+							? "Manage your clinic operations and view analytics"
+							: "Check-in patients and manage appointments"}
+					</p>
 				</div>
 				<div className="flex gap-3">
-					<button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-						Import Data
-					</button>
+					{isAdminUser && (
+						<button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+							View Reports
+						</button>
+					)}
 					<button className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors flex items-center gap-2">
 						<span className="text-lg">+</span>
 						Add Patient
@@ -286,7 +331,7 @@ export default async function DashboardPage() {
 							</CardDescription>
 						</div>
 						<div className="flex items-center gap-2">
-							<Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200 px-3 py-1">
+							<Badge className="bg-teal-50 text-teal-700 border-teal-200 px-3 py-1">
 								<Clock className="h-3 w-3 mr-1.5" />
 								{appointments.length} total
 							</Badge>
@@ -325,6 +370,11 @@ export default async function DashboardPage() {
 										<th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
 											Status
 										</th>
+										{!isAdminUser && (
+											<th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+												Action
+											</th>
+										)}
 									</tr>
 								</thead>
 								<tbody className="bg-white divide-y divide-gray-100">
@@ -366,6 +416,17 @@ export default async function DashboardPage() {
 													{capitalizeStatus(appointment.status)}
 												</Badge>
 											</td>
+											{!isAdminUser && (
+												<td className="px-6 py-4 whitespace-nowrap">
+													{appointment.status === "scheduled" && new Date(appointment.time) <= now ? (
+														<button className="px-3 py-1.5 bg-teal-600 text-white text-xs rounded-md hover:bg-teal-700 transition-colors">
+															Check-in
+														</button>
+													) : (
+														<span className="text-xs text-gray-400">-</span>
+													)}
+												</td>
+											)}
 										</tr>
 									))}
 								</tbody>
