@@ -39,6 +39,7 @@ import {
 	calculateGrowthPercentage,
 	getMonthlyRevenue,
 } from "@/utils/dashboard-stats";
+import QuickActionsClient from "@/components/quick-actions-client";
 
 export default async function DashboardPage() {
 	const session = await auth.api.getSession({
