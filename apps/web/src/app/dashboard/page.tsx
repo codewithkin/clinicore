@@ -46,12 +46,15 @@ export default async function DashboardPage() {
 
 	const isAdminUser = isAdmin(userRole);
 
-	// Date helpers
-	const today = getStartOfToday();
-	const tomorrow = getStartOfTomorrow();
-	const now = new Date();
-
-	// Get dashboard statistics
+	// Fetch organization data for branding
+	let organization = null;
+	if (organizationId) {
+		const { db } = await import("@my-better-t-app/db");
+		organization = await db.organization.findUnique({
+			where: { id: organizationId },
+			select: { name: true, logo: true },
+		});
+	}
 	const totalPatients = await getTotalPatients(organizationId);
 	const lastMonthPatients = await getPatientsFromMonthsAgo(1, organizationId);
 	const recentPatients = await getRecentPatients(1, organizationId);
@@ -178,16 +181,29 @@ export default async function DashboardPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<div className="flex items-center gap-3">
-						<h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-						<Badge className="text-xs">
-							{isAdminUser ? "Admin" : "Receptionist"}
-						</Badge>
+						{organization?.logo && (
+							<img
+								src={organization.logo}
+								alt={organization.name || "Organization"}
+								className="h-10 w-10 rounded-lg object-cover"
+							/>
+						)}
+						<div>
+							<div className="flex items-center gap-2">
+								<h1 className="text-3xl font-bold text-gray-900">
+									{organization?.name || "Dashboard"}
+								</h1>
+								<Badge className="text-xs">
+									{isAdminUser ? "Admin" : "Receptionist"}
+								</Badge>
+							</div>
+							<p className="text-gray-500 mt-1">
+								{isAdminUser
+									? "Manage your clinic operations and view analytics"
+									: "Check-in patients and manage appointments"}
+							</p>
+						</div>
 					</div>
-					<p className="text-gray-500 mt-1">
-						{isAdminUser
-							? "Manage your clinic operations and view analytics"
-							: "Check-in patients and manage appointments"}
-					</p>
 				</div>
 				<div className="flex gap-3">
 					<button className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors flex items-center gap-2">

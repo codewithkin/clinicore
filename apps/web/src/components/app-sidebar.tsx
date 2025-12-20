@@ -79,7 +79,15 @@ const settingsNavItem = {
 	icon: Settings,
 };
 
-export function AppSidebar({ user, isAdmin }: { user: any; isAdmin: boolean }) {
+export function AppSidebar({
+	user,
+	isAdmin,
+	organization
+}: {
+	user: any;
+	isAdmin: boolean;
+	organization: { id: string; name: string; logo: string | null; slug: string } | null;
+}) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const { open } = useSidebar();
@@ -96,12 +104,24 @@ export function AppSidebar({ user, isAdmin }: { user: any; isAdmin: boolean }) {
 					<SidebarMenuItem>
 						<SidebarMenuButton size="lg" asChild>
 							<a href="/dashboard">
-								<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-									<LayoutDashboard className="size-4" />
-								</div>
+								{organization?.logo ? (
+									<div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
+										<img
+											src={organization.logo}
+											alt={organization.name}
+											className="size-8 object-cover"
+										/>
+									</div>
+								) : (
+									<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-teal-600 text-white">
+										<span className="text-sm font-bold">
+											{organization?.name?.charAt(0).toUpperCase() || "C"}
+										</span>
+									</div>
+								)}
 								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-semibold">Clinicore</span>
-									<span className="truncate text-xs">Healthcare Ops</span>
+									<span className="truncate font-semibold">{organization?.name || "Clinicore"}</span>
+									<span className="truncate text-xs text-muted-foreground">Healthcare Platform</span>
 								</div>
 							</a>
 						</SidebarMenuButton>

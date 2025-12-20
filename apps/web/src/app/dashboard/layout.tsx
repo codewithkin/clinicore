@@ -4,6 +4,8 @@ import { auth } from "@my-better-t-app/auth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { getUserOrganization, getUserRole, isAdmin as checkIsAdmin } from "@/lib/dashboard-helpers";
+import { db } from "@my-better-t-app/db";
 
 export default async function DashboardLayout({
 	children,
@@ -18,12 +20,25 @@ export default async function DashboardLayout({
 		redirect("/auth/signup");
 	}
 
-	// Check if user is admin by checking their role in the active organization
-	const isAdmin = session.user.role === "admin" || session.user.role === "owner";
+	// Get user's organization and role
+	const organizationId = await getUserOrganization(session.user.id);
+	const userRole = organizationId
+		? await getUserRole(session.user.id, organizationId)
+		: "receptionist";
+	const isAdmin = checkIsAdmin(userRole);
+
+	// Fetch organization data for branding
+	let organization = null;
+	if (organizationId) {
+		organization = await db.organization.findUnique({
+			where: { id: organizationId },
+			select: { id: true, name: true, logo: true, slug: true },
+		});
+	}
 
 	return (
 		<SidebarProvider>
-			<AppSidebar user={session.user} isAdmin={isAdmin} />
+			<AppSidebar user={session.user} isAdmin={isAdmin} organization={organization} />
 			<SidebarInset>
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 					<SidebarTrigger className="-ml-1" />
