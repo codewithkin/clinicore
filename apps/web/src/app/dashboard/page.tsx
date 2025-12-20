@@ -193,11 +193,11 @@ export default async function DashboardPage() {
 	};
 
 	return (
-		<div className="space-y-6 p-6">
+		<div className="space-y-6 p-3 md:p-6">
 			{/* Header */}
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
 				<div>
-					<div className="flex items-center gap-3">
+					<div className="flex flex-col md:flex-row items-start md:items-center gap-3">
 						{organization?.logo && (
 							<img
 								src={organization.logo}
@@ -295,21 +295,18 @@ export default async function DashboardPage() {
 			{/* Appointments Table */}
 			<Card className="border-gray-200 rounded-2xl overflow-hidden shadow-sm">
 				<CardHeader className="border-b border-gray-100 bg-white px-6 py-4">
-					<div className="flex items-center justify-between">
+					<div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
 						<div>
 							<CardTitle className="text-lg font-semibold text-gray-900">Today's Appointments</CardTitle>
 							<CardDescription className="text-sm text-gray-500 mt-0.5">
 								Overview of scheduled and completed appointments
 							</CardDescription>
 						</div>
-						<div className="flex items-center gap-2">
+						<div className="flex items-start md:items-center gap-2">
 							<Badge className="bg-teal-50 text-teal-700 border-teal-200 px-3 py-1">
 								<Clock className="h-3 w-3 mr-1.5" />
 								{appointments.length} total
 							</Badge>
-							<button className="text-sm text-teal-600 font-medium hover:text-teal-700 flex items-center gap-1">
-								+ New
-							</button>
 						</div>
 					</div>
 				</CardHeader>
