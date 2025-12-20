@@ -109,8 +109,82 @@ model Appointment {
 - **Text**: Gray-900 (#1F2937) for headings
 - **Borders**: Gray-200 for subtle dividers
 
+---
+
+## Role-Based Dashboard Implementation
+
+### Overview
+The dashboard now displays different data and features based on user role:
+- **Admin/Doctor**: Full access to all data including revenue and staff management
+- **Receptionist**: Limited access focused on patient check-in and appointment scheduling
+
+### Implementation Details
+
+#### 1. Role Detection
+```typescript
+// Get user's role from organization membership
+const userRole = await getUserRole(session.user.id, organizationId);
+const isAdminUser = isAdmin(userRole);
+```
+
+#### 2. Helper Functions Added
+- `getUserRole(userId, organizationId)`: Fetches user's role from Member table
+- `isAdmin(role)`: Returns true if role is "admin" or "doctor"
+
+#### 3. Role-Based Stats Cards
+
+**Admin/Doctor Stats (4 cards):**
+1. Total Patients (teal background)
+2. Appointments Today
+3. Monthly Revenue
+4. Active Staff
+
+**Receptionist Stats (3 cards):**
+1. Today's Appointments (teal background)
+2. Pending Check-ins (overdue appointments)
+3. Total Patients (with recently registered count)
+
+#### 4. UI Differences
+
+**Header:**
+- Shows role badge (Admin/Receptionist)
+- Admins see "View Reports" button
+- Both roles see "Add Patient" button
+- Different subtitle text based on role
+
+**Appointments Table:**
+- Admins: Full view of all appointments
+- Receptionists: Additional "Check-in" button column for overdue scheduled appointments
+
+#### 5. Data Filtering
+
+**Receptionist Restrictions:**
+- ❌ No revenue data
+- ❌ No staff count
+- ✅ Can see all today's appointments
+- ✅ Can check-in patients
+- ✅ Can add new patients
+- ✅ Can schedule appointments
+
+**Admin Permissions:**
+- ✅ Full access to all data
+- ✅ Revenue metrics
+- ✅ Staff management data
+- ✅ All appointment details
+
+### Security Implementation
+- Role checked server-side on every page load
+- Organization membership verified before data access
+- Stats calculated differently based on role
+- UI elements conditionally rendered based on permissions
+
+---
+
 ## Next Steps
-- Add organization filtering to only show data for the active organization
-- Implement "Add Patient" and "Schedule Appointment" functionality
-- Add real-time updates using websockets or polling
-- Implement revenue tracking and reporting
+- Implement "Check-in" button functionality for receptionists
+- Add role-based tRPC middleware for API protection
+- Create separate "View Reports" page for admins
+- Implement "Add Patient" modal
+- Add "Schedule Appointment" functionality
+- Create staff management section for admins
+- Add real revenue calculation from completed appointments
