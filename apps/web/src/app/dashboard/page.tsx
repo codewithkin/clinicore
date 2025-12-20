@@ -161,13 +161,19 @@ export default async function DashboardPage() {
 	const getStatusColor = (status: string) => {
 		switch (status.toLowerCase()) {
 			case "completed":
-				return "bg-green-100 text-green-800";
+				return "bg-green-100 text-green-800 border-green-200";
 			case "in progress":
-				return "bg-teal-100 text-teal-800";
+				return "bg-teal-100 text-teal-800 border-teal-200";
 			case "scheduled":
-				return "bg-gray-100 text-gray-700";
+				return "bg-blue-100 text-blue-800 border-blue-200";
+			case "cancelled":
+				return "bg-red-100 text-red-800 border-red-200";
+			case "no-show":
+				return "bg-orange-100 text-orange-800 border-orange-200";
+			case "confirmed":
+				return "bg-purple-100 text-purple-800 border-purple-200";
 			default:
-				return "bg-gray-100 text-gray-800";
+				return "bg-gray-100 text-gray-800 border-gray-200";
 		}
 	};
 
@@ -342,7 +348,7 @@ export default async function DashboardPage() {
 											</td>
 											<td className="px-6 py-4 whitespace-nowrap">
 												<Badge
-													className={`${getStatusColor(appointment.status)} border-none font-medium px-2.5 py-1`}
+													className={`${getStatusColor(appointment.status)} border font-medium px-2.5 py-1`}
 												>
 													{capitalizeStatus(appointment.status)}
 												</Badge>
