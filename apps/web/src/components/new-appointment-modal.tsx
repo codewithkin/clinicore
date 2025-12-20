@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 type Props = {
     open: boolean;
@@ -34,8 +35,8 @@ export default function NewAppointmentModal({ open, onClose, onCreate }: Props) 
                     <input required type="datetime-local" value={time} onChange={e => setTime(e.target.value)} className="w-full px-3 py-2 border rounded" />
                     <input value={type} onChange={e => setType(e.target.value)} placeholder="Type (e.g., Consultation)" className="w-full px-3 py-2 border rounded" />
                     <div className="flex justify-end gap-2 mt-3">
-                        <button type="button" onClick={onClose} className="px-4 py-2 rounded border">Cancel</button>
-                        <button type="submit" className="px-4 py-2 bg-teal-600 text-white rounded">Create</button>
+                        <Button type="button" variant="outline" onClick={onClose} className="px-4 py-2">Cancel</Button>
+                        <Button type="submit" className="px-4 py-2">Create</Button>
                     </div>
                 </form>
             </div>

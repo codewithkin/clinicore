@@ -40,6 +40,7 @@ import {
 	getMonthlyRevenue,
 } from "@/utils/dashboard-stats";
 import QuickActionsClient from "@/components/quick-actions-client";
+import ScheduleAppointmentClient from "@/components/schedule-appointment-client";
 
 export default async function DashboardPage() {
 	const session = await auth.api.getSession({
@@ -224,34 +225,7 @@ export default async function DashboardPage() {
 					</div>
 				</div>
 				<div className="flex gap-3">
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<button className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors flex items-center gap-2">
-								<span className="text-lg">+</span>
-								Quick Actions
-								<ChevronDown className="h-4 w-4" />
-							</button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-56">
-							<DropdownMenuItem className="cursor-pointer">
-								<UserPlus className="mr-2 h-4 w-4" />
-								<span>Add Patient</span>
-							</DropdownMenuItem>
-							<DropdownMenuItem className="cursor-pointer">
-								<CalendarPlus className="mr-2 h-4 w-4" />
-								<span>Create Appointment</span>
-							</DropdownMenuItem>
-							{isAdminUser && (
-								<>
-									<DropdownMenuSeparator />
-									<DropdownMenuItem className="cursor-pointer">
-										<Mail className="mr-2 h-4 w-4" />
-										<span>Invite User</span>
-									</DropdownMenuItem>
-								</>
-							)}
-						</DropdownMenuContent>
-					</DropdownMenu>
+					<QuickActionsClient isAdmin={isAdminUser} />
 				</div>
 			</div>
 
@@ -316,9 +290,7 @@ export default async function DashboardPage() {
 						<div className="py-12 text-center">
 							<Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
 							<p className="text-gray-500 text-sm">No appointments scheduled for today</p>
-							<button className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors">
-								Schedule Appointment
-							</button>
+							<ScheduleAppointmentClient />
 						</div>
 					) : (
 						<div className="overflow-x-auto">
