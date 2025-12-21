@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +36,7 @@ import {
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { authClient } from "@/lib/auth-client";
+import { trpc, queryClient } from "@/utils/trpc";
 
 type Plan = {
     id: string;
@@ -76,6 +79,7 @@ type NotificationSettings = {
 
 type Props = {
     organizationName: string;
+    organizationId: string;
     currentPlan: Plan;
     usage: Usage;
     schedulingSettings?: SchedulingSettings;
@@ -84,6 +88,7 @@ type Props = {
 
 export default function SettingsClient({
     organizationName,
+    organizationId,
     currentPlan,
     usage,
     schedulingSettings: initialScheduling,
@@ -142,18 +147,28 @@ export default function SettingsClient({
         fetchPolarData();
     }, []);
 
-    // Save settings
-    const saveSettings = async () => {
-        try {
-            await fetch("/api/settings", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ scheduling, notifications }),
+    // Mutation for saving settings
+    const saveSettingsMutation = useMutation({
+        mutationFn: async () => {
+            return trpc.settings.updateOrganizationSettings.mutate({
+                organizationId,
+                scheduling,
+                notifications,
             });
-        } catch (error) {
-            console.error("Error saving settings:", error);
-        }
+        },
+        onSuccess: () => {
+            toast.success("Settings saved successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.message || "Failed to save settings");
+        },
+    });
+
+    // Save settings handler
+    const saveSettings = () => {
+        saveSettingsMutation.mutate();
     };
+
 
     return (
         <div className="space-y-6">
@@ -372,8 +387,12 @@ export default function SettingsClient({
                                         </p>
                                     </div>
 
-                                    <Button onClick={saveSettings} className="w-full bg-teal-600 hover:bg-teal-700">
-                                        Save Scheduling Preferences
+                                    <Button
+                                        onClick={saveSettings}
+                                        className="w-full bg-teal-600 hover:bg-teal-700"
+                                        disabled={saveSettingsMutation.isPending}
+                                    >
+                                        {saveSettingsMutation.isPending ? "Saving..." : "Save Scheduling Preferences"}
                                     </Button>
                                 </CardContent>
                             </CollapsibleContent>
@@ -476,8 +495,12 @@ export default function SettingsClient({
                                         </div>
                                     </div>
 
-                                    <Button onClick={saveSettings} className="w-full bg-teal-600 hover:bg-teal-700">
-                                        Save Email Settings
+                                    <Button
+                                        onClick={saveSettings}
+                                        className="w-full bg-teal-600 hover:bg-teal-700"
+                                        disabled={saveSettingsMutation.isPending}
+                                    >
+                                        {saveSettingsMutation.isPending ? "Saving..." : "Save Email Settings"}
                                     </Button>
                                 </CardContent>
                             </CollapsibleContent>
@@ -576,8 +599,12 @@ export default function SettingsClient({
                                         </div>
                                     ))}
 
-                                    <Button onClick={saveSettings} className="w-full bg-teal-600 hover:bg-teal-700 mt-4">
-                                        Save Notification Settings
+                                    <Button
+                                        onClick={saveSettings}
+                                        className="w-full bg-teal-600 hover:bg-teal-700 mt-4"
+                                        disabled={saveSettingsMutation.isPending}
+                                    >
+                                        {saveSettingsMutation.isPending ? "Saving..." : "Save Notification Settings"}
                                     </Button>
                                 </CardContent>
                             </CollapsibleContent>

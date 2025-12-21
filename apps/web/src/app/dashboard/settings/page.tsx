@@ -91,6 +91,7 @@ export default async function SettingsPage() {
 
 			<SettingsClient
 				organizationName={organization.name}
+				organizationId={organizationId}
 				currentPlan={currentPlan}
 				usage={{
 					seats: {
