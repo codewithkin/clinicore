@@ -4,9 +4,15 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, UserPlus, Mail, Phone, Calendar } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, Calendar, MoreVertical, Eye, Trash2 } from "lucide-react";
 import NewPatientModal from "@/components/new-patient-modal";
 import ExportButton from "@/components/export-button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
     Pagination,
     PaginationContent,
@@ -219,9 +225,23 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <Button variant="outline" size="sm" className="text-xs">
-                                                    View Details
-                                                </Button>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem className="cursor-pointer">
+                                                            <Eye className="h-4 w-4 mr-2" />
+                                                            View Details
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                            <Trash2 className="h-4 w-4 mr-2" />
+                                                            Delete Patient
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </td>
                                         </tr>
                                     ))}
