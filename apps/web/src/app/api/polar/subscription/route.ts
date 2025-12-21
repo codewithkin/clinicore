@@ -19,7 +19,7 @@ export async function GET() {
 			return NextResponse.json({ error: "No organization found" }, { status: 404 });
 		}
 
-		// Create a customer portal session to get subscription data
+		// Use customer email instead of external ID
 		const customerSession = await polar.customerSessions.create({
 			customerEmail: session.user.email,
 		});
@@ -28,7 +28,7 @@ export async function GET() {
 			return NextResponse.json({ subscription: null, orders: [] });
 		}
 
-		// Get subscriptions
+		// Fetch subscriptions and orders using customer email
 		const subscriptionsResponse = await fetch(
 			"https://sandbox-api.polar.sh/v1/customer-portal/subscriptions",
 			{
@@ -43,7 +43,6 @@ export async function GET() {
 			(sub: any) => sub.status === "active" || sub.status === "trialing"
 		);
 
-		// Get orders (for invoices)
 		const ordersResponse = await fetch(
 			"https://sandbox-api.polar.sh/v1/customer-portal/orders?limit=10",
 			{
@@ -54,11 +53,7 @@ export async function GET() {
 		);
 
 		const orders = await ordersResponse.json();
-
-		return NextResponse.json({
-			subscription: activeSubscription || null,
-			orders: orders.items || [],
-		});
+		return NextResponse.json({ subscription: activeSubscription, orders: orders.items });
 	} catch (error) {
 		console.error("Error fetching Polar data:", error);
 		return NextResponse.json(
