@@ -26,10 +26,11 @@ type ExportButtonProps<T> = {
     data: T[];
     allData: T[];
     filename: string;
-    columns: {
+    columns?: {
         header: string;
         accessor: (item: T) => string | number;
     }[];
+    headers?: string[];
     title?: string;
     variant?: "default" | "outline" | "ghost";
     size?: "default" | "sm" | "lg" | "icon";
@@ -41,6 +42,7 @@ export default function ExportButton<T>({
     allData,
     filename,
     columns,
+    headers,
     title = "Export Data",
     variant = "outline",
     size = "sm",
@@ -68,23 +70,40 @@ export default function ExportButton<T>({
     };
 
     const exportToCSV = (dataToExport: T[]) => {
-        // Create CSV header
-        const headers = columns.map(col => col.header).join(",");
+        let csvContent: string;
 
-        // Create CSV rows
-        const rows = dataToExport.map(item =>
-            columns.map(col => {
-                const value = col.accessor(item);
-                // Escape values that contain commas or quotes
-                const stringValue = String(value);
-                if (stringValue.includes(",") || stringValue.includes('"') || stringValue.includes("\n")) {
-                    return `"${stringValue.replace(/"/g, '""')}"`;
-                }
-                return stringValue;
-            }).join(",")
-        );
-
-        const csvContent = [headers, ...rows].join("\n");
+        // Check if data is array-based (tuples) or object-based
+        if (Array.isArray(dataToExport[0])) {
+            // Array-based data (tuples)
+            const headerRow = headers || ["Column 1", "Column 2"];
+            const rows = (dataToExport as unknown as string[][]).map(row =>
+                row.map(value => {
+                    const stringValue = String(value);
+                    if (stringValue.includes(",") || stringValue.includes('"') || stringValue.includes("\n")) {
+                        return `"${stringValue.replace(/"/g, '""')}"`;
+                    }
+                    return stringValue;
+                }).join(",")
+            );
+            csvContent = [headerRow.join(","), ...rows].join("\n");
+        } else {
+            // Object-based data with columns
+            if (!columns) {
+                throw new Error("columns prop is required for object-based data");
+            }
+            const headerRow = columns.map(col => col.header).join(",");
+            const rows = dataToExport.map(item =>
+                columns.map(col => {
+                    const value = col.accessor(item);
+                    const stringValue = String(value);
+                    if (stringValue.includes(",") || stringValue.includes('"') || stringValue.includes("\n")) {
+                        return `"${stringValue.replace(/"/g, '""')}"`;
+                    }
+                    return stringValue;
+                }).join(",")
+            );
+            csvContent = [headerRow, ...rows].join("\n");
+        }
 
         // Create and download file
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -115,16 +134,31 @@ export default function ExportButton<T>({
             minute: "2-digit"
         })}`, 14, 22);
 
-        // Prepare table data
-        const headers = columns.map(col => col.header);
-        const rows = dataToExport.map(item =>
-            columns.map(col => String(col.accessor(item)))
-        );
+        let tableHeaders: string[];
+        let tableRows: string[][];
+
+        // Check if data is array-based (tuples) or object-based
+        if (Array.isArray(dataToExport[0])) {
+            // Array-based data (tuples)
+            tableHeaders = headers || ["Column 1", "Column 2"];
+            tableRows = (dataToExport as unknown as string[][]).map(row =>
+                row.map(value => String(value))
+            );
+        } else {
+            // Object-based data with columns
+            if (!columns) {
+                throw new Error("columns prop is required for object-based data");
+            }
+            tableHeaders = columns.map(col => col.header);
+            tableRows = dataToExport.map(item =>
+                columns.map(col => String(col.accessor(item)))
+            );
+        }
 
         // Add table
         autoTable(doc, {
-            head: [headers],
-            body: rows,
+            head: [tableHeaders],
+            body: tableRows,
             startY: 28,
             theme: "grid",
             styles: {
@@ -157,16 +191,16 @@ export default function ExportButton<T>({
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem
                         onClick={() => handleFormatSelect("csv")}
-                        className="bg-green-600 text-white hover:bg-green-700 focus:bg-green-700 focus:text-white cursor-pointer"
+                        className="bg-green-600 text-white hover:bg-green-700 focus:bg-green-700 focus:text-white cursor-pointer mb-1"
                     >
-                        <Table className="h-4 w-4 mr-2" />
+                        <Table className="h-4 w-4 mr-2 stroke-white" />
                         Export as CSV
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         onClick={() => handleFormatSelect("pdf")}
                         className="bg-red-600 text-white hover:bg-red-700 focus:bg-red-700 focus:text-white cursor-pointer"
                     >
-                        <FileText className="h-4 w-4 mr-2" />
+                        <FileText className="h-4 w-4 mr-2 stroke-white" />
                         Export as PDF
                     </DropdownMenuItem>
                 </DropdownMenuContent>
