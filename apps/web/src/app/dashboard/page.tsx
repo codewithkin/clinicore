@@ -244,12 +244,12 @@ export default async function DashboardPage() {
 			</div>
 
 			{/* Stats Cards */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="flex flex-wrap gap-4">
 				{statsData.map((stat, index) => {
 					const Icon = stat.icon;
 					const isFirst = index === 0;
 					return (
-						<Card key={stat.title} className={`${isFirst ? stat.bgColor : "bg-white"} border ${stat.borderColor} rounded-2xl overflow-hidden hover:shadow-lg transition-shadow`}>
+						<Card key={stat.title} className={`${isFirst ? stat.bgColor : "bg-white"} border ${stat.borderColor} rounded-2xl overflow-hidden hover:shadow-lg transition-shadow flex-1 min-w-[200px]`}>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 								<CardTitle className={`text-sm font-medium ${isFirst ? "text-white/90" : "text-gray-600"}`}>
 									{stat.title}
