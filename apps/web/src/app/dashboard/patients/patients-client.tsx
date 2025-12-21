@@ -4,9 +4,17 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Search, UserPlus, Mail, Phone, Calendar } from "lucide-react";
 import NewPatientModal from "@/components/new-patient-modal";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 type Patient = {
     id: string;
@@ -27,6 +35,8 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
     const [searchQuery, setSearchQuery] = useState("");
     const [openNewPatient, setOpenNewPatient] = useState(false);
     const [patients, setPatients] = useState(initialPatients);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const filteredPatients = patients.filter((patient) => {
         const query = searchQuery.toLowerCase();
@@ -37,6 +47,15 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
             patient.phone?.toLowerCase().includes(query)
         );
     });
+
+    const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedPatients = filteredPatients.slice(startIndex, endIndex);
+
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     const handlePatientCreated = (newPatient: any) => {
         setPatients([newPatient, ...patients]);
@@ -126,7 +145,7 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-100">
-                                    {filteredPatients.map((patient) => (
+                                    {paginatedPatients.map((patient) => (
                                         <tr
                                             key={patient.id}
                                             className="hover:bg-gray-50/50 transition-colors group"
@@ -201,6 +220,49 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
                         </div>
                     )}
                 </CardContent>
+                {totalPages > 1 && (
+                    <div className="border-t border-gray-100 px-6 py-4">
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            if (currentPage > 1) setCurrentPage(currentPage - 1);
+                                        }}
+                                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                                {[...Array(totalPages)].map((_, i) => (
+                                    <PaginationItem key={i + 1}>
+                                        <PaginationLink
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setCurrentPage(i + 1);
+                                            }}
+                                            isActive={currentPage === i + 1}
+                                            className="cursor-pointer"
+                                        >
+                                            {i + 1}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                    <PaginationNext
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                                        }}
+                                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
             </Card>
 
             <NewPatientModal
