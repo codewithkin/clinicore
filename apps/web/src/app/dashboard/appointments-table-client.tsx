@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "@/utils/axios";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,8 +45,6 @@ export default function AppointmentsTableClient({ appointments: initialAppointme
     const [currentPage, setCurrentPage] = useState(1);
     const [appointments, setAppointments] = useState(initialAppointments);
     const itemsPerPage = 10;
-    const now = new Date();
-    const router = useRouter();
 
     const totalPages = Math.ceil(appointments.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;

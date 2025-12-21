@@ -11,6 +11,7 @@ import {
 	Settings,
 	ChevronUp,
 	User2,
+	Building2,
 } from "lucide-react";
 import {
 	Sidebar,
@@ -66,6 +67,13 @@ const adminNavItems = [
 		icon: CreditCard,
 	},
 ];
+
+// Admin-only clinic settings
+const clinicNavItem = {
+	title: "Clinic",
+	url: "/dashboard/clinic",
+	icon: Building2,
+};
 
 // Settings navigation item
 const settingsNavItem = {
@@ -167,6 +175,28 @@ export function AppSidebar({
 										</SidebarMenuButton>
 									</SidebarMenuItem>
 								))}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				)}
+
+				{/* Clinic Settings (Admin Only) */}
+				{isAdmin && (
+					<SidebarGroup>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								<SidebarMenuItem>
+									<SidebarMenuButton
+										asChild
+										isActive={pathname === clinicNavItem.url}
+										tooltip={clinicNavItem.title}
+									>
+										<a href={clinicNavItem.url}>
+											<clinicNavItem.icon />
+											<span>{clinicNavItem.title}</span>
+										</a>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
 							</SidebarMenu>
 						</SidebarGroupContent>
 					</SidebarGroup>
