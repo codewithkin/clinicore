@@ -293,9 +293,9 @@ export default function SettingsClient({
                                 <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <CardTitle className="text-lg font-semibold text-gray-900">Appointment Defaults</CardTitle>
+                                            <CardTitle className="text-lg font-semibold text-gray-900">Appointment Scheduling</CardTitle>
                                             <CardDescription className="text-sm text-gray-500 mt-1">
-                                                Configure default settings for new appointments
+                                                Set default appointment duration, buffers, and booking rules
                                             </CardDescription>
                                         </div>
                                         <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${openCards.appointmentDefaults ? 'rotate-180' : ''}`} />
@@ -303,96 +303,127 @@ export default function SettingsClient({
                                 </CardHeader>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="defaultDuration">Default Appointment Duration</Label>
-                                            <Select
-                                                value={String(scheduling.defaultDuration || 30)}
-                                                onValueChange={(v) => setScheduling({ ...scheduling, defaultDuration: Number(v) })}
-                                            >
-                                                <SelectTrigger id="defaultDuration">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="15">15 minutes</SelectItem>
-                                                    <SelectItem value="30">30 minutes</SelectItem>
-                                                    <SelectItem value="45">45 minutes</SelectItem>
-                                                    <SelectItem value="60">60 minutes</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                <CardContent className="space-y-6">
+                                    {/* Duration Settings */}
+                                    <div className="space-y-4">
+                                        <div className="pb-4 border-b border-gray-100">
+                                            <h4 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+                                                <Clock className="h-4 w-4 text-teal-600" />
+                                                Time Management
+                                            </h4>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="bufferTime">Buffer Time Between Appointments</Label>
-                                            <Select
-                                                value={String(scheduling.bufferTime || 15)}
-                                                onValueChange={(v) => setScheduling({ ...scheduling, bufferTime: Number(v) })}
-                                            >
-                                                <SelectTrigger id="bufferTime">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="0">No buffer</SelectItem>
-                                                    <SelectItem value="5">5 minutes</SelectItem>
-                                                    <SelectItem value="10">10 minutes</SelectItem>
-                                                    <SelectItem value="15">15 minutes</SelectItem>
-                                                    <SelectItem value="30">30 minutes</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="defaultDuration" className="text-gray-700 font-medium">Default Appointment Duration (minutes)</Label>
+                                                <Input
+                                                    id="defaultDuration"
+                                                    type="number"
+                                                    min="5"
+                                                    max="480"
+                                                    value={scheduling.defaultDuration || 30}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        const num = parseInt(value, 10);
+                                                        if (value === '' || !isNaN(num)) {
+                                                            setScheduling({ ...scheduling, defaultDuration: value === '' ? 30 : Math.max(5, Math.min(480, num)) });
+                                                        }
+                                                    }}
+                                                    className="bg-white"
+                                                    placeholder="30"
+                                                />
+                                                <p className="text-xs text-gray-500">
+                                                    Default length for newly scheduled appointments (5-480 minutes)
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bufferTime" className="text-gray-700 font-medium">Buffer Time Between Appointments (minutes)</Label>
+                                                <Input
+                                                    id="bufferTime"
+                                                    type="number"
+                                                    min="0"
+                                                    max="240"
+                                                    value={scheduling.bufferTime || 15}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        const num = parseInt(value, 10);
+                                                        if (value === '' || !isNaN(num)) {
+                                                            setScheduling({ ...scheduling, bufferTime: value === '' ? 15 : Math.max(0, Math.min(240, num)) });
+                                                        }
+                                                    }}
+                                                    className="bg-white"
+                                                    placeholder="15"
+                                                />
+                                                <p className="text-xs text-gray-500">
+                                                    Time between appointments for preparation/cleanup (0-240 minutes)
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="bookingWindow">Booking Window</Label>
-                                        <Select
-                                            value={String(scheduling.bookingWindow || 30)}
-                                            onValueChange={(v) => setScheduling({ ...scheduling, bookingWindow: Number(v) })}
-                                        >
-                                            <SelectTrigger id="bookingWindow">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="7">7 days in advance</SelectItem>
-                                                <SelectItem value="14">14 days in advance</SelectItem>
-                                                <SelectItem value="30">30 days in advance</SelectItem>
-                                                <SelectItem value="60">60 days in advance</SelectItem>
-                                                <SelectItem value="90">90 days in advance</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-xs text-gray-500">
-                                            How far in advance patients can book appointments
-                                        </p>
-                                    </div>
+                                    {/* Booking Rules */}
+                                    <div className="space-y-4">
+                                        <div className="pb-4 border-b border-gray-100">
+                                            <h4 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+                                                <Calendar className="h-4 w-4 text-teal-600" />
+                                                Booking Rules
+                                            </h4>
+                                        </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cancellationPolicy">Cancellation Policy</Label>
-                                        <Select
-                                            value={String(scheduling.cancellationPolicy || 24)}
-                                            onValueChange={(v) => setScheduling({ ...scheduling, cancellationPolicy: Number(v) })}
-                                        >
-                                            <SelectTrigger id="cancellationPolicy">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="0">No restriction</SelectItem>
-                                                <SelectItem value="12">12 hours before</SelectItem>
-                                                <SelectItem value="24">24 hours before</SelectItem>
-                                                <SelectItem value="48">48 hours before</SelectItem>
-                                                <SelectItem value="72">72 hours before</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-xs text-gray-500">
-                                            Minimum notice required for cancellations
-                                        </p>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="bookingWindow" className="text-gray-700 font-medium">Booking Window (days in advance)</Label>
+                                            <Input
+                                                id="bookingWindow"
+                                                type="number"
+                                                min="1"
+                                                max="365"
+                                                value={scheduling.bookingWindow || 30}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    const num = parseInt(value, 10);
+                                                    if (value === '' || !isNaN(num)) {
+                                                        setScheduling({ ...scheduling, bookingWindow: value === '' ? 30 : Math.max(1, Math.min(365, num)) });
+                                                    }
+                                                }}
+                                                className="bg-white"
+                                                placeholder="30"
+                                            />
+                                            <p className="text-xs text-gray-500">
+                                                How far in advance patients can book appointments (1-365 days)
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="cancellationPolicy" className="text-gray-700 font-medium">Cancellation Notice Period (hours)</Label>
+                                            <Input
+                                                id="cancellationPolicy"
+                                                type="number"
+                                                min="0"
+                                                max="168"
+                                                value={scheduling.cancellationPolicy || 24}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    const num = parseInt(value, 10);
+                                                    if (value === '' || !isNaN(num)) {
+                                                        setScheduling({ ...scheduling, cancellationPolicy: value === '' ? 24 : Math.max(0, Math.min(168, num)) });
+                                                    }
+                                                }}
+                                                className="bg-white"
+                                                placeholder="24"
+                                            />
+                                            <p className="text-xs text-gray-500">
+                                                Minimum notice required for appointment cancellations (0-168 hours = 7 days)
+                                            </p>
+                                        </div>
                                     </div>
 
                                     <Button
                                         onClick={saveSettings}
-                                        className="w-full bg-teal-600 hover:bg-teal-700"
+                                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium mt-4"
                                         disabled={saveSettingsMutation.isPending}
                                     >
-                                        {saveSettingsMutation.isPending ? "Saving..." : "Save Scheduling Preferences"}
+                                        {saveSettingsMutation.isPending ? "Saving..." : "Save Scheduling Settings"}
                                     </Button>
                                 </CardContent>
                             </CollapsibleContent>
@@ -400,18 +431,20 @@ export default function SettingsClient({
                     </Collapsible>
 
                     {/* Working Hours Reference */}
-                    <Card className="rounded-2xl bg-blue-50 border-blue-200">
+                    <Card className="rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 shadow-sm">
                         <CardContent className="pt-6">
                             <div className="flex items-start gap-3">
-                                <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
-                                <div>
-                                    <p className="font-medium text-gray-900">Clinic Working Hours</p>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        To modify your clinic's operating hours and business schedule, visit the{" "}
-                                        <a href="/dashboard/clinic" className="text-teal-600 hover:underline font-medium">
+                                <div className="p-2 bg-blue-600/10 rounded-lg">
+                                    <Clock className="h-5 w-5 text-blue-600" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-gray-900">Clinic Operating Hours</p>
+                                    <p className="text-sm text-gray-600 mt-2">
+                                        Set your clinic's working hours and holiday schedules in{" "}
+                                        <a href="/dashboard/clinic" className="text-blue-600 hover:text-blue-700 underline font-medium">
                                             Clinic Management
-                                        </a>{" "}
-                                        page.
+                                        </a>
+                                        . These settings control when appointments can be scheduled.
                                     </p>
                                 </div>
                             </div>
