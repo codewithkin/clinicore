@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DatePicker from "@/components/ui/date-picker";
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "@/utils/axios";
+import { QUERY_KEYS } from "@/utils/query-keys";
 
 type Props = {
     open: boolean;
@@ -24,6 +27,8 @@ export default function NewPatientModal({ open, onClose, onCreate, organizationI
 
     if (!open) return null;
 
+    const queryClient = useQueryClient();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -31,20 +36,11 @@ export default function NewPatientModal({ open, onClose, onCreate, organizationI
 
         try {
             const payload = { firstName, lastName, email, phone, dob, organizationId };
-            const response = await fetch("/api/patients", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || "Failed to create patient");
-            }
-
-            const data = await response.json();
+            const response = await axios.post("/api/patients", payload);
+            const data = response.data;
             onCreate?.(data.patient);
             onClose();
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.patients(organizationId) });
             toast.success("Patient created");
             // Reset form
             setFirstName("");
@@ -53,7 +49,7 @@ export default function NewPatientModal({ open, onClose, onCreate, organizationI
             setPhone("");
             setDob("");
         } catch (err: any) {
-            const msg = err.message || "Failed to create patient";
+            const msg = err?.response?.data?.error || err.message || "Failed to create patient";
             setError(msg);
             toast.error(msg);
         } finally {

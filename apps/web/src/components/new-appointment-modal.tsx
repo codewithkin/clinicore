@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DatePicker from "@/components/ui/date-picker";
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "@/utils/axios";
+import { QUERY_KEYS } from "@/utils/query-keys";
 
 type Props = {
     open: boolean;
@@ -39,6 +42,30 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
 
     if (!open) return null;
 
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation(
+        (payload: any) => axios.post("/api/appointments", payload).then(res => res.data),
+        {
+            onSuccess(data) {
+                queryClient.invalidateQueries(QUERY_KEYS.appointments(organizationId));
+                toast.success("Appointment created");
+                onCreate?.(data.appointment);
+                onClose();
+                // Reset form
+                setPatientId("");
+                setDoctorName("");
+                setTime("");
+                setType("");
+            },
+            onError(err: any) {
+                const msg = err?.response?.data?.error || err.message || "Failed to create appointment";
+                setError(msg);
+                toast.error(msg);
+            },
+        }
+    );
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!patientId) {
@@ -48,35 +75,8 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
         setLoading(true);
         setError("");
 
-        try {
-            const payload = { patientId, doctorName, time, type };
-            const response = await fetch("/api/appointments", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || "Failed to create appointment");
-            }
-
-            const data = await response.json();
-            onCreate?.(data.appointment);
-            onClose();
-            toast.success("Appointment created");
-            // Reset form
-            setPatientId("");
-            setDoctorName("");
-            setTime("");
-            setType("");
-        } catch (err: any) {
-            const msg = err.message || "Failed to create appointment";
-            setError(msg);
-            toast.error(msg);
-        } finally {
-            setLoading(false);
-        }
+        mutation.mutate({ patientId, doctorName, time, type });
+        setLoading(false);
     };
 
     return (
