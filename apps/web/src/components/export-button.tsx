@@ -155,11 +155,17 @@ export default function ExportButton<T>({
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleFormatSelect("csv")}>
+                    <DropdownMenuItem
+                        onClick={() => handleFormatSelect("csv")}
+                        className="bg-green-600 text-white hover:bg-green-700 focus:bg-green-700 focus:text-white cursor-pointer"
+                    >
                         <Table className="h-4 w-4 mr-2" />
                         Export as CSV
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleFormatSelect("pdf")}>
+                    <DropdownMenuItem
+                        onClick={() => handleFormatSelect("pdf")}
+                        className="bg-red-600 text-white hover:bg-red-700 focus:bg-red-700 focus:text-white cursor-pointer"
+                    >
                         <FileText className="h-4 w-4 mr-2" />
                         Export as PDF
                     </DropdownMenuItem>
