@@ -6,12 +6,15 @@ import { getUserOrganization } from "@/lib/dashboard-helpers";
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        if (!params?.id) {
+        const { id } = await params;
+
+        if (!id) {
             return NextResponse.json({ error: "Missing appointment id" }, { status: 400 });
         }
+
         const session = await auth.api.getSession({
             headers: await headers(),
         });
@@ -28,7 +31,7 @@ export async function DELETE(
 
         // Verify the appointment belongs to the user's organization
         const appointment = await db.appointment.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: { patient: true },
         });
 
@@ -38,7 +41,7 @@ export async function DELETE(
 
         // Update appointment status to cancelled instead of deleting
         await db.appointment.update({
-            where: { id: params.id },
+            where: { id },
             data: { status: "cancelled" },
         });
 
