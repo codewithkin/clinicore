@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "@/utils/axios";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -44,6 +47,7 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
     const [patients, setPatients] = useState(initialPatients);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const router = useRouter();
 
     const filteredPatients = patients.filter((patient) => {
         const query = searchQuery.toLowerCase();
@@ -66,6 +70,25 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
 
     const handlePatientCreated = (newPatient: any) => {
         setPatients([newPatient, ...patients]);
+    };
+
+    const handleDeletePatient = async (patientId: string) => {
+        if (!confirm("Are you sure you want to delete this patient? This action cannot be undone.")) {
+            return;
+        }
+
+        try {
+            await axios.delete(`/api/patients/${patientId}`);
+            setPatients(patients.filter(p => p.id !== patientId));
+            toast.success("Patient deleted successfully");
+        } catch (error) {
+            console.error("Error deleting patient:", error);
+            toast.error("Failed to delete patient");
+        }
+    };
+
+    const handleViewDetails = (patientId: string) => {
+        router.push(`/dashboard/patients/${patientId}`);
     };
 
     return (
@@ -232,11 +255,17 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem className="cursor-pointer">
+                                                        <DropdownMenuItem
+                                                            className="cursor-pointer"
+                                                            onClick={() => handleViewDetails(patient.id)}
+                                                        >
                                                             <Eye className="h-4 w-4 mr-2" />
                                                             View Details
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                        <DropdownMenuItem
+                                                            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                            onClick={() => handleDeletePatient(patient.id)}
+                                                        >
                                                             <Trash2 className="h-4 w-4 mr-2" />
                                                             Delete Patient
                                                         </DropdownMenuItem>
