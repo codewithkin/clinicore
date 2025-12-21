@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DatePicker from "@/components/ui/date-picker";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/utils/axios";
 import { QUERY_KEYS } from "@/utils/query-keys";
 import { queryClient } from "@/utils/trpc";
@@ -43,30 +42,6 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
 
     if (!open) return null;
 
-    const mutation = useMutation(
-        (payload: any) => axios.post("/api/appointments", payload).then(res => res.data),
-        {
-            onSuccess(data: any) {
-                queryClient.invalidateQueries({
-                    queryKey: QUERY_KEYS.appointments as unknown as any
-                });
-                toast.success("Appointment created");
-                onCreate?.(data.appointment);
-                onClose();
-                // Reset form
-                setPatientId("");
-                setDoctorName("");
-                setTime("");
-                setType("");
-            },
-            onError(err: any) {
-                const msg = err?.response?.data?.error || err.message || "Failed to create appointment";
-                setError(msg);
-                toast.error(msg);
-            },
-        }
-    );
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!patientId) {
@@ -76,8 +51,28 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
         setLoading(true);
         setError("");
 
-        mutation.mutate({ patientId, doctorName, time, type });
-        setLoading(false);
+        try {
+            const payload = { patientId, doctorName, time, type };
+            const response = await axios.post("/api/appointments", payload);
+            const data = response.data;
+            onCreate?.(data.appointment);
+            onClose();
+            queryClient.invalidateQueries({
+                queryKey: QUERY_KEYS.appointments as unknown as any
+            });
+            toast.success("Appointment created");
+            // Reset form
+            setPatientId("");
+            setDoctorName("");
+            setTime("");
+            setType("");
+        } catch (err: any) {
+            const msg = err?.response?.data?.error || err.message || "Failed to create appointment";
+            setError(msg);
+            toast.error(msg);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -104,7 +99,7 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
                         </select>
                     </div>
                     <Input required value={doctorName} onChange={e => setDoctorName(e.target.value)} placeholder="Doctor name" className="w-full" />
-                    <DatePicker required value={time} onChange={setTime} mode="datetime-local" className="w-full" />
+                    <DatePicker value={time} onChange={setTime} mode="datetime-local" className="w-full" />
                     <Input value={type} onChange={e => setType(e.target.value)} placeholder="Type (e.g., Consultation)" className="w-full" />
                     <div className="flex justify-end gap-2 mt-3">
                         <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="px-4 py-2">Cancel</Button>
