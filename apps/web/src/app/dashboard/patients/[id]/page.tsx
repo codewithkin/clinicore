@@ -9,7 +9,9 @@ import { Mail, Phone, Calendar, MapPin, User, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getUserOrganization } from "@/lib/dashboard-helpers";
 
-export default async function PatientDetailPage({ params }: { params: { id: string } }) {
+export default async function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+
     const session = await auth.api.getSession({
         headers: await headers(),
     });
@@ -21,8 +23,12 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
     const organizationId = await getUserOrganization(session.user.id);
 
     // Fetch patient details
+    if (!id) {
+        redirect("/dashboard/patients");
+    }
+
     const patient = await db.patient.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
             appointments: {
                 orderBy: { time: "desc" },
