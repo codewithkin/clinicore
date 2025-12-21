@@ -269,18 +269,8 @@ export default function SettingsClient({
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="billingEmail">Billing Email</Label>
-                                        <Input
-                                            id="billingEmail"
-                                            type="email"
-                                            defaultValue={`billing@${organizationName.toLowerCase().replace(/\s+/g, "")}.com`}
-                                            placeholder="billing@clinic.com"
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                            Invoices and payment receipts will be sent to this email
-                                        </p>
-                                    </div>
+                                    {/* Billing Email */}
+                                    {/* This section has been removed temporarily */}
 
                                     <Button
                                         variant="outline"
