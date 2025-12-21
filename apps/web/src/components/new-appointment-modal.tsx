@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DatePicker from "@/components/ui/date-picker";
+import { toast } from "sonner";
 
 type Props = {
     open: boolean;
@@ -63,13 +64,16 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
             const data = await response.json();
             onCreate?.(data.appointment);
             onClose();
+            toast.success("Appointment created");
             // Reset form
             setPatientId("");
             setDoctorName("");
             setTime("");
             setType("");
         } catch (err: any) {
-            setError(err.message || "Failed to create appointment");
+            const msg = err.message || "Failed to create appointment";
+            setError(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }

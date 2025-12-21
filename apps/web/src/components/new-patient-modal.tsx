@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DatePicker from "@/components/ui/date-picker";
+import { toast } from "sonner";
 
 type Props = {
     open: boolean;
@@ -44,6 +45,7 @@ export default function NewPatientModal({ open, onClose, onCreate, organizationI
             const data = await response.json();
             onCreate?.(data.patient);
             onClose();
+            toast.success("Patient created");
             // Reset form
             setFirstName("");
             setLastName("");
@@ -51,7 +53,9 @@ export default function NewPatientModal({ open, onClose, onCreate, organizationI
             setPhone("");
             setDob("");
         } catch (err: any) {
-            setError(err.message || "Failed to create patient");
+            const msg = err.message || "Failed to create patient";
+            setError(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
