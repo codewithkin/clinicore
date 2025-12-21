@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DatePicker from "@/components/ui/date-picker";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/utils/axios";
 import { QUERY_KEYS } from "@/utils/query-keys";
+import { queryClient } from "@/utils/trpc";
 
 type Props = {
     open: boolean;
@@ -27,8 +27,6 @@ export default function NewPatientModal({ open, onClose, onCreate, organizationI
 
     if (!open) return null;
 
-    const queryClient = useQueryClient();
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -40,7 +38,11 @@ export default function NewPatientModal({ open, onClose, onCreate, organizationI
             const data = response.data;
             onCreate?.(data.patient);
             onClose();
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.patients(organizationId) });
+
+            queryClient.invalidateQueries({
+                queryKey: QUERY_KEYS.patients as unknown as any
+            });
+
             toast.success("Patient created");
             // Reset form
             setFirstName("");

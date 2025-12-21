@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "@/utils/axios";
 import { QUERY_KEYS } from "@/utils/query-keys";
+import { queryClient } from "@/utils/trpc";
 
 type Props = {
     open: boolean;
@@ -42,13 +43,13 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
 
     if (!open) return null;
 
-    const queryClient = useQueryClient();
-
     const mutation = useMutation(
         (payload: any) => axios.post("/api/appointments", payload).then(res => res.data),
         {
-            onSuccess(data) {
-                queryClient.invalidateQueries(QUERY_KEYS.appointments(organizationId));
+            onSuccess(data: any) {
+                queryClient.invalidateQueries({
+                    queryKey: QUERY_KEYS.appointments as unknown as any
+                });
                 toast.success("Appointment created");
                 onCreate?.(data.appointment);
                 onClose();
