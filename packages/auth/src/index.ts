@@ -239,10 +239,7 @@ If you weren't expecting this, you can ignore this email.`,
     // Polar payment integration
     polar({
       client: polarClient,
-      // Skip customer creation during sign-up to avoid blocking invitation auto-provision
-      // (customers will be created during checkout flows instead).
-      createCustomerOnSignUp: false,
-      enableCustomerPortal: true,
+      createCustomerOnSignUp: true, // Enable automatic customer creation
       use: [
         checkout({
           products: [

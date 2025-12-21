@@ -19,16 +19,16 @@ export async function GET() {
 			return NextResponse.json({ error: "No organization found" }, { status: 404 });
 		}
 
-		// Use customer email instead of external ID
+		// Revert to using customer ID instead of email
 		const customerSession = await polar.customerSessions.create({
-			customerEmail: session.user.email,
+			externalCustomerId: session.user.id,
 		});
 
 		if (!customerSession.customerSessionToken) {
 			return NextResponse.json({ subscription: null, orders: [] });
 		}
 
-		// Fetch subscriptions and orders using customer email
+		// Fetch subscriptions and orders using customer ID
 		const subscriptionsResponse = await fetch(
 			"https://sandbox-api.polar.sh/v1/customer-portal/subscriptions",
 			{
