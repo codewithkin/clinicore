@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "@/utils/axios";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MoreVertical, Eye, Trash2 } from "lucide-react";
@@ -39,15 +42,39 @@ type Props = {
     isAdminUser: boolean;
 };
 
-export default function AppointmentsTableClient({ appointments, organizationId, isAdminUser }: Props) {
+export default function AppointmentsTableClient({ appointments: initialAppointments, organizationId, isAdminUser }: Props) {
     const [currentPage, setCurrentPage] = useState(1);
+    const [appointments, setAppointments] = useState(initialAppointments);
     const itemsPerPage = 10;
     const now = new Date();
+    const router = useRouter();
 
     const totalPages = Math.ceil(appointments.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedAppointments = appointments.slice(startIndex, endIndex);
+
+    const handleCancelAppointment = async (appointmentId: string) => {
+        if (!confirm("Are you sure you want to cancel this appointment?")) {
+            return;
+        }
+
+        try {
+            await axios.delete(`/api/appointments/${appointmentId}`);
+            setAppointments(appointments.map(apt =>
+                apt.id === appointmentId ? { ...apt, status: "cancelled" } : apt
+            ));
+            toast.success("Appointment cancelled successfully");
+        } catch (error) {
+            console.error("Error cancelling appointment:", error);
+            toast.error("Failed to cancel appointment");
+        }
+    };
+
+    const handleViewDetails = (appointmentId: string) => {
+        // For now, just show a toast. You can create an appointment detail page later
+        toast.info("Appointment details view coming soon");
+    };
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
@@ -182,11 +209,17 @@ export default function AppointmentsTableClient({ appointments, organizationId, 
                                                     </button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem className="cursor-pointer">
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer"
+                                                        onClick={() => handleViewDetails(appointment.id)}
+                                                    >
                                                         <Eye className="h-4 w-4 mr-2" />
                                                         View Details
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                        onClick={() => handleCancelAppointment(appointment.id)}
+                                                    >
                                                         <Trash2 className="h-4 w-4 mr-2" />
                                                         Cancel Appointment
                                                     </DropdownMenuItem>
