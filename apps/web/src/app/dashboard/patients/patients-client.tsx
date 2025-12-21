@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, UserPlus, Mail, Phone, Calendar } from "lucide-react";
 import NewPatientModal from "@/components/new-patient-modal";
+import ExportButton from "@/components/export-button";
 import {
     Pagination,
     PaginationContent,
@@ -102,6 +103,19 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
                                 {filteredPatients.length} {filteredPatients.length === 1 ? 'patient' : 'patients'} found
                             </CardDescription>
                         </div>
+                        <ExportButton
+                            data={paginatedPatients}
+                            allData={filteredPatients}
+                            filename="patients"
+                            title="Patients List"
+                            columns={[
+                                { header: "Name", accessor: (p) => `${p.firstName} ${p.lastName}` },
+                                { header: "Email", accessor: (p) => p.email || "N/A" },
+                                { header: "Phone", accessor: (p) => p.phone || "N/A" },
+                                { header: "Date of Birth", accessor: (p) => p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString("en-US") : "Not set" },
+                                { header: "Registered", accessor: (p) => new Date(p.createdAt).toLocaleDateString("en-US") },
+                            ]}
+                        />
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">

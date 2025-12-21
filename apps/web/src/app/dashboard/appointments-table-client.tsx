@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock } from "lucide-react";
 import ScheduleAppointmentClient from "@/components/schedule-appointment-client";
+import ExportButton from "@/components/export-button";
 import {
     Pagination,
     PaginationContent,
@@ -80,6 +81,19 @@ export default function AppointmentsTableClient({ appointments, organizationId, 
                             <Clock className="h-3 w-3 mr-1.5" />
                             {appointments.length} total
                         </Badge>
+                        <ExportButton
+                            data={paginatedAppointments}
+                            allData={appointments}
+                            filename="appointments"
+                            title="Today's Appointments"
+                            columns={[
+                                { header: "Time", accessor: (a) => new Date(a.time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) },
+                                { header: "Patient", accessor: (a) => `${a.patient.firstName} ${a.patient.lastName}` },
+                                { header: "Doctor", accessor: (a) => a.doctorName },
+                                { header: "Type", accessor: (a) => a.type || "N/A" },
+                                { header: "Status", accessor: (a) => capitalizeStatus(a.status) },
+                            ]}
+                        />
                     </div>
                 </div>
             </CardHeader>
