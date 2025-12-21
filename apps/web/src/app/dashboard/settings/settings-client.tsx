@@ -91,12 +91,9 @@ export default function SettingsClient({
 }: Props) {
     const [activeTab, setActiveTab] = useState("billing");
     const [customerState, setCustomerState] = useState<any>(null);
-    const [orders, setOrders] = useState<any[]>([]);
     const [loadingPolar, setLoadingPolar] = useState(true);
     const [openCards, setOpenCards] = useState({
         currentPlan: true,
-        paymentMethod: true,
-        billingHistory: true,
         appointmentDefaults: true,
         emailReminders: true,
         smsReminders: true,
@@ -126,15 +123,22 @@ export default function SettingsClient({
         patientRegistration: false,
     });
 
-    // Fetch Polar customer state and orders via Better Auth
-    const fetchPolarData = async () => {
-        const response = await fetch("/api/polar/subscription");
-        const data = await response.json();
-        setCustomerState(data.subscription);
-        setOrders(data.orders);
-    };
-
+    // Fetch Polar customer state and subscriptions via Better Auth portal plugin
     useEffect(() => {
+        const fetchPolarData = async () => {
+            try {
+                // Get customer state (includes customer data, subscriptions, benefits, meters)
+                const stateResponse = await authClient.customer.state();
+                if (stateResponse.data) {
+                    setCustomerState(stateResponse.data);
+                }
+            } catch (error) {
+                console.error("Error fetching Polar customer state:", error);
+            } finally {
+                setLoadingPolar(false);
+            }
+        };
+
         fetchPolarData();
     }, []);
 
@@ -189,20 +193,44 @@ export default function SettingsClient({
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                                 <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between p-4 bg-teal-50 border border-teal-200 rounded-xl">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="text-xl font-bold text-gray-900">{currentPlan.name}</h3>
-                                                <Badge className="bg-teal-600 text-white">Active</Badge>
+                                    {loadingPolar ? (
+                                        <p className="text-sm text-gray-500">Loading subscription data...</p>
+                                    ) : customerState?.subscriptions && customerState.subscriptions.length > 0 ? (
+                                        <>
+                                            {customerState.subscriptions.map((sub: any) => (
+                                                <div key={sub.id} className="flex items-center justify-between p-4 bg-teal-50 border border-teal-200 rounded-xl">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <h3 className="text-xl font-bold text-gray-900">{sub.product?.name || "Plan"}</h3>
+                                                            <Badge className={`${sub.status === "active" ? "bg-teal-600" : sub.status === "trialing" ? "bg-blue-600" : "bg-gray-600"} text-white`}>
+                                                                {sub.status || "Active"}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="text-sm text-gray-600 mt-1">
+                                                            {sub.current_period_start && sub.current_period_end && (
+                                                                <>Next billing: {new Date(sub.current_period_end).toLocaleDateString()}</>
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        <div className="flex items-center justify-between p-4 bg-teal-50 border border-teal-200 rounded-xl">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-xl font-bold text-gray-900">{currentPlan.name}</h3>
+                                                    <Badge className="bg-teal-600 text-white">Active</Badge>
+                                                </div>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    ${currentPlan.price}/month + ${currentPlan.perAdditionalSeat} per additional seat
+                                                </p>
                                             </div>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                ${currentPlan.price}/month + ${currentPlan.perAdditionalSeat} per additional seat
-                                            </p>
+                                            <Button variant="outline" size="sm">
+                                                Change Plan
+                                            </Button>
                                         </div>
-                                        <Button variant="outline" size="sm">
-                                            Change Plan
-                                        </Button>
-                                    </div>
+                                    )}
 
                                     {/* Usage Limits */}
                                     <div className="space-y-3 pt-4">
@@ -236,50 +264,6 @@ export default function SettingsClient({
                                             })}
                                         </div>
                                     </div>
-                                </CardContent>
-                            </CollapsibleContent>
-                        </Card>
-                    </Collapsible>
-
-                    {/* Payment Method */}
-                    <Collapsible open={openCards.paymentMethod} onOpenChange={() => toggleCard('paymentMethod')}>
-                        <Card className="border-gray-200 rounded-2xl">
-                            <CollapsibleTrigger asChild>
-                                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <CardTitle className="text-lg font-semibold text-gray-900">Payment Method</CardTitle>
-                                            <CardDescription className="text-sm text-gray-500 mt-1">
-                                                Update your billing information and payment details
-                                            </CardDescription>
-                                        </div>
-                                        <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${openCards.paymentMethod ? 'rotate-180' : ''}`} />
-                                    </div>
-                                </CardHeader>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl">
-                                        <div className="w-12 h-8 bg-gray-900 rounded flex items-center justify-center">
-                                            <CreditCard className="h-5 w-5 text-white" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-gray-900">•••• •••• •••• 4242</p>
-                                            <p className="text-sm text-gray-500">Expires 12/2025</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Billing Email */}
-                                    {/* This section has been removed temporarily */}
-
-                                    <Button
-                                        variant="outline"
-                                        className="w-full gap-2"
-                                        onClick={() => authClient.customer.portal()}
-                                    >
-                                        <ExternalLink className="h-4 w-4" />
-                                        Manage via Polar
-                                    </Button>
                                 </CardContent>
                             </CollapsibleContent>
                         </Card>
