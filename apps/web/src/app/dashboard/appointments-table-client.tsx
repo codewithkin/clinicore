@@ -3,9 +3,15 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, MoreVertical, Eye, Trash2 } from "lucide-react";
 import ScheduleAppointmentClient from "@/components/schedule-appointment-client";
 import ExportButton from "@/components/export-button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
     Pagination,
     PaginationContent,
@@ -124,11 +130,9 @@ export default function AppointmentsTableClient({ appointments, organizationId, 
                                     <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                         Status
                                     </th>
-                                    {!isAdminUser && (
-                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                                            Action
-                                        </th>
-                                    )}
+                                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-100">
@@ -170,17 +174,25 @@ export default function AppointmentsTableClient({ appointments, organizationId, 
                                                 {capitalizeStatus(appointment.status)}
                                             </Badge>
                                         </td>
-                                        {!isAdminUser && (
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {appointment.status === "scheduled" && new Date(appointment.time) <= now ? (
-                                                    <button className="px-3 py-1.5 bg-teal-600 text-white text-xs rounded-md hover:bg-teal-700 transition-colors">
-                                                        Check-in
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <button className="h-8 w-8 p-0 hover:bg-gray-100 rounded-md flex items-center justify-center transition-colors">
+                                                        <MoreVertical className="h-4 w-4" />
                                                     </button>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">-</span>
-                                                )}
-                                            </td>
-                                        )}
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Eye className="h-4 w-4 mr-2" />
+                                                        View Details
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                        <Trash2 className="h-4 w-4 mr-2" />
+                                                        Cancel Appointment
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
