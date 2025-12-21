@@ -16,6 +16,7 @@ import {
 import { getUserOrganization } from "@/lib/dashboard-helpers";
 import { formatPrice } from "@/lib/formatters";
 import { db } from "@my-better-t-app/db";
+import ExportButton from "@/components/export-button";
 
 export default async function ReportsPage() {
 	const session = await auth.api.getSession({
@@ -132,11 +133,62 @@ export default async function ReportsPage() {
 	return (
 		<div className="space-y-6 p-3 md:p-6">
 			{/* Header */}
-			<div>
-				<h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
-				<p className="text-gray-500 mt-1">
-					Track your clinic's performance and key metrics
-				</p>
+			<div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+				<div>
+					<h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
+					<p className="text-gray-500 mt-1">
+						Track your clinic's performance and key metrics
+					</p>
+				</div>
+				<ExportButton
+					data={[
+						["Total Patients", totalPatients.toString()],
+						["Patients This Month", patientsThisMonth.toString()],
+						["Patients Last Month", patientsLastMonth.toString()],
+						["Patient Growth", `${patientGrowth}%`],
+						["", ""],
+						["Total Appointments", totalAppointments.toString()],
+						["Appointments This Month", appointmentsThisMonth.toString()],
+						["Appointments Last Month", appointmentsLastMonth.toString()],
+						["Appointment Growth", `${appointmentGrowth}%`],
+						["", ""],
+						["Completed Appointments", completedAppointments.toString()],
+						["Cancelled Appointments", cancelledAppointments.toString()],
+						["No-Show Appointments", noShowAppointments.toString()],
+						["Completion Rate", `${completionRate}%`],
+						["No-Show Rate", `${noShowRate}%`],
+						["", ""],
+						...recentAppointments.map(apt => [
+							`${new Date(apt.time).toLocaleDateString()} - ${apt.patient.firstName} ${apt.patient.lastName}`,
+							`${apt.doctorName} | ${apt.type || "N/A"} | ${apt.status}`
+						] as [string, string])
+					]}
+					allData={[
+						["Total Patients", totalPatients.toString()],
+						["Patients This Month", patientsThisMonth.toString()],
+						["Patients Last Month", patientsLastMonth.toString()],
+						["Patient Growth", `${patientGrowth}%`],
+						["", ""],
+						["Total Appointments", totalAppointments.toString()],
+						["Appointments This Month", appointmentsThisMonth.toString()],
+						["Appointments Last Month", appointmentsLastMonth.toString()],
+						["Appointment Growth", `${appointmentGrowth}%`],
+						["", ""],
+						["Completed Appointments", completedAppointments.toString()],
+						["Cancelled Appointments", cancelledAppointments.toString()],
+						["No-Show Appointments", noShowAppointments.toString()],
+						["Completion Rate", `${completionRate}%`],
+						["No-Show Rate", `${noShowRate}%`],
+						["", ""],
+						...recentAppointments.map(apt => [
+							`${new Date(apt.time).toLocaleDateString()} - ${apt.patient.firstName} ${apt.patient.lastName}`,
+							`${apt.doctorName} | ${apt.type || "N/A"} | ${apt.status}`
+						] as [string, string])
+					]}
+					filename={`clinic-report-${new Date().toISOString().split('T')[0]}`}
+					headers={["Metric", "Value"]}
+					title="Clinic Analytics Report"
+				/>
 			</div>
 
 			{/* Key Metrics */}
