@@ -47,9 +47,6 @@ const coreNavItems = [
 		icon: Users,
 	},
 	{
-		/* Tasks removed from sidebar */
-	},
-	{
 		title: "Reports",
 		url: "/dashboard/reports",
 		icon: BarChart3,

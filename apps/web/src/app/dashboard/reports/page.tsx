@@ -60,13 +60,13 @@ export default async function ReportsPage() {
 
 	// Total appointments
 	const totalAppointments = organizationId ? await db.appointment.count({
-		where: { organizationId }
+		where: { patient: { organizationId } }
 	}) : 0;
 
 	// Appointments this month
 	const appointmentsThisMonth = organizationId ? await db.appointment.count({
 		where: {
-			organizationId,
+			patient: { organizationId },
 			time: { gte: firstDayOfMonth }
 		}
 	}) : 0;
@@ -74,7 +74,7 @@ export default async function ReportsPage() {
 	// Appointments last month
 	const appointmentsLastMonth = organizationId ? await db.appointment.count({
 		where: {
-			organizationId,
+			patient: { organizationId },
 			time: {
 				gte: firstDayOfLastMonth,
 				lt: firstDayOfCurrentMonth
@@ -84,15 +84,15 @@ export default async function ReportsPage() {
 
 	// Appointment status breakdown (all time)
 	const completedAppointments = organizationId ? await db.appointment.count({
-		where: { organizationId, status: "completed" }
+		where: { patient: { organizationId }, status: "completed" }
 	}) : 0;
 
 	const cancelledAppointments = organizationId ? await db.appointment.count({
-		where: { organizationId, status: "cancelled" }
+		where: { patient: { organizationId }, status: "cancelled" }
 	}) : 0;
 
 	const noShowAppointments = organizationId ? await db.appointment.count({
-		where: { organizationId, status: "no-show" }
+		where: { patient: { organizationId }, status: "no-show" }
 	}) : 0;
 
 	// Calculate growth percentages
@@ -116,7 +116,7 @@ export default async function ReportsPage() {
 
 	// Recent activity - last 10 appointments
 	const recentAppointments = organizationId ? await db.appointment.findMany({
-		where: { organizationId },
+		where: { patient: { organizationId } },
 		take: 10,
 		orderBy: { time: 'desc' },
 		include: {
