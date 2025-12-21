@@ -88,6 +88,7 @@ export default async function DashboardPage() {
 	const appointments = await getTodayAppointments(organizationId, 10);
 
 	// Get next appointment time for receptionist
+	const now = new Date();
 	const nextAppointment = appointments.find(apt => new Date(apt.time) > now);
 
 	// Get latest patients
