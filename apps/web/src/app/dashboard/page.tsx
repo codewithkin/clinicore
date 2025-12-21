@@ -91,7 +91,6 @@ export default async function DashboardPage() {
 
 	// Calculate patient growth
 	const patientGrowth = calculateGrowthPercentage(totalPatients, lastMonthPatients);
-
 	// Role-based stats configuration
 	const statsData = isAdminUser
 		? [
