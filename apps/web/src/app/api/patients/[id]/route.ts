@@ -9,6 +9,9 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
+        if (!params?.id) {
+            return NextResponse.json({ error: "Missing patient id" }, { status: 400 });
+        }
         const session = await auth.api.getSession({
             headers: await headers(),
         });
