@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import {
 	LayoutDashboard,
 	Users,
@@ -143,6 +142,7 @@ export function AppSidebar({
 										asChild
 										isActive={pathname === item.url}
 										tooltip={item.title}
+										className={pathname === item.url ? "text-white font-semibold" : "text-gray-600"}
 									>
 										<a href={item.url}>
 											<item.icon />
@@ -167,6 +167,7 @@ export function AppSidebar({
 											asChild
 											isActive={pathname === item.url}
 											tooltip={item.title}
+											className={pathname === item.url ? "text-white font-semibold" : "text-gray-600"}
 										>
 											<a href={item.url}>
 												<item.icon />
@@ -190,6 +191,7 @@ export function AppSidebar({
 										asChild
 										isActive={pathname === clinicNavItem.url}
 										tooltip={clinicNavItem.title}
+										className={pathname === clinicNavItem.url ? "text-white font-semibold" : "text-gray-600"}
 									>
 										<a href={clinicNavItem.url}>
 											<clinicNavItem.icon />
@@ -211,6 +213,7 @@ export function AppSidebar({
 									asChild
 									isActive={pathname === settingsNavItem.url}
 									tooltip={settingsNavItem.title}
+									className={pathname === settingsNavItem.url ? "text-white font-semibold" : "text-gray-600"}
 								>
 									<a href={settingsNavItem.url}>
 										<settingsNavItem.icon />
