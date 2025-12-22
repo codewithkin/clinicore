@@ -21,6 +21,7 @@ import {
     Mail,
     MessageSquare,
     ChevronDown,
+    Info,
 } from "lucide-react";
 import {
     Select,
@@ -315,7 +316,15 @@ export default function SettingsClient({
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-2">
-                                                <Label htmlFor="defaultDuration" className="text-gray-700 font-medium">Default Appointment Duration (minutes)</Label>
+                                                <div className="flex items-center gap-2">
+                                                    <Label htmlFor="defaultDuration" className="text-gray-700 font-medium">Default Appointment Duration (minutes)</Label>
+                                                    <div className="relative group inline-block">
+                                                        <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                            Default length for newly scheduled appointments (5-480 minutes)
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <Input
                                                     id="defaultDuration"
                                                     type="number"
@@ -332,13 +341,18 @@ export default function SettingsClient({
                                                     className="bg-white"
                                                     placeholder="30"
                                                 />
-                                                <p className="text-xs text-gray-500">
-                                                    Default length for newly scheduled appointments (5-480 minutes)
-                                                </p>
                                             </div>
 
                                             <div className="space-y-2">
-                                                <Label htmlFor="bufferTime" className="text-gray-700 font-medium">Buffer Time Between Appointments (minutes)</Label>
+                                                <div className="flex items-center gap-2">
+                                                    <Label htmlFor="bufferTime" className="text-gray-700 font-medium">Buffer Time Between Appointments (minutes)</Label>
+                                                    <div className="relative group inline-block">
+                                                        <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                            Time between appointments for preparation/cleanup (0-240 minutes)
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <Input
                                                     id="bufferTime"
                                                     type="number"
@@ -355,9 +369,6 @@ export default function SettingsClient({
                                                     className="bg-white"
                                                     placeholder="15"
                                                 />
-                                                <p className="text-xs text-gray-500">
-                                                    Time between appointments for preparation/cleanup (0-240 minutes)
-                                                </p>
                                             </div>
                                         </div>
                                     </div>
@@ -372,7 +383,15 @@ export default function SettingsClient({
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="bookingWindow" className="text-gray-700 font-medium">Booking Window (days in advance)</Label>
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="bookingWindow" className="text-gray-700 font-medium">Booking Window (days in advance)</Label>
+                                                <div className="relative group inline-block">
+                                                    <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                        How far in advance patients can book appointments (1-365 days)
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <Input
                                                 id="bookingWindow"
                                                 type="number"
@@ -389,13 +408,18 @@ export default function SettingsClient({
                                                 className="bg-white"
                                                 placeholder="30"
                                             />
-                                            <p className="text-xs text-gray-500">
-                                                How far in advance patients can book appointments (1-365 days)
-                                            </p>
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="cancellationPolicy" className="text-gray-700 font-medium">Cancellation Notice Period (hours)</Label>
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="cancellationPolicy" className="text-gray-700 font-medium">Cancellation Notice Period (hours)</Label>
+                                                <div className="relative group inline-block">
+                                                    <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                        Minimum notice required for appointment cancellations (0-168 hours = 7 days)
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <Input
                                                 id="cancellationPolicy"
                                                 type="number"
@@ -412,9 +436,6 @@ export default function SettingsClient({
                                                 className="bg-white"
                                                 placeholder="24"
                                             />
-                                            <p className="text-xs text-gray-500">
-                                                Minimum notice required for appointment cancellations (0-168 hours = 7 days)
-                                            </p>
                                         </div>
                                     </div>
 
