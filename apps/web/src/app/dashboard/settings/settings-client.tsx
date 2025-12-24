@@ -84,6 +84,7 @@ type Props = {
     usage: Usage;
     schedulingSettings?: SchedulingSettings;
     notificationSettings?: NotificationSettings;
+    defaultAppointmentLength?: number;
 };
 
 export default function SettingsClient({
@@ -93,6 +94,7 @@ export default function SettingsClient({
     usage,
     schedulingSettings: initialScheduling,
     notificationSettings: initialNotifications,
+    defaultAppointmentLength: initialDefaultLength,
 }: Props) {
     const [activeTab, setActiveTab] = useState("billing");
     const [customerState, setCustomerState] = useState<any>(null);
@@ -110,6 +112,8 @@ export default function SettingsClient({
     };
 
     // Settings state
+    const [defaultAppointmentLength, setDefaultAppointmentLength] = useState<number>(initialDefaultLength || 30);
+
     const [scheduling, setScheduling] = useState<SchedulingSettings>(initialScheduling || {
         defaultDuration: 30,
         bufferTime: 15,
@@ -164,6 +168,25 @@ export default function SettingsClient({
             scheduling,
             notifications,
         });
+    };
+
+    // Save default appointment length
+    const saveDefaultAppointmentLength = async () => {
+        try {
+            const response = await fetch(`/api/organizations/${organizationId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ defaultAppointmentLength }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to update default appointment length");
+            }
+
+            toast.success("Default appointment length updated");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to save default appointment length");
+        }
     };
 
 
@@ -301,6 +324,47 @@ export default function SettingsClient({
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                                 <CardContent className="space-y-6">
+                                    {/* Organization Default */}
+                                    <div className="space-y-4">
+                                        <div className="pb-4 border-b border-gray-100">
+                                            <h4 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+                                                <Calendar className="h-4 w-4 text-teal-600" />
+                                                Organization Defaults
+                                            </h4>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Label htmlFor="defaultAppointmentLength" className="text-gray-700 font-medium">Default Appointment Length (minutes)</Label>
+                                                    <div className="relative group inline-block">
+                                                        <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                            Default length shown when creating new appointments
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <Input
+                                                    id="defaultAppointmentLength"
+                                                    type="number"
+                                                    min="5"
+                                                    max="480"
+                                                    value={defaultAppointmentLength}
+                                                    onChange={(e) => setDefaultAppointmentLength(parseInt(e.target.value) || 30)}
+                                                    className="bg-white max-w-xs"
+                                                    placeholder="30"
+                                                />
+                                            </div>
+
+                                            <Button
+                                                onClick={saveDefaultAppointmentLength}
+                                                className="bg-teal-600 hover:bg-teal-700 text-white font-medium"
+                                            >
+                                                Save Default Length
+                                            </Button>
+                                        </div>
+                                    </div>
+
                                     {/* Duration Settings */}
                                     <div className="space-y-4">
                                         <div className="pb-4 border-b border-gray-100">

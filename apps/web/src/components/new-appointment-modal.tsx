@@ -29,12 +29,18 @@ type SchedulingSettings = {
     cancellationPolicy?: number;
 };
 
+type Organization = {
+    defaultAppointmentLength?: number;
+};
+
 export default function NewAppointmentModal({ open, onClose, onCreate, organizationId }: Props) {
     const [patientId, setPatientId] = useState("");
     const [patients, setPatients] = useState<Patient[]>([]);
     const [schedulingSettings, setSchedulingSettings] = useState<SchedulingSettings | null>(null);
+    const [organization, setOrganization] = useState<Organization | null>(null);
     const [doctorName, setDoctorName] = useState("");
     const [time, setTime] = useState("");
+    const [duration, setDuration] = useState<number>(30);
     const [type, setType] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -56,6 +62,17 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
                     }
                 })
                 .catch(err => console.error("Failed to fetch settings:", err));
+
+            // Fetch organization details
+            fetch(`/api/organizations/${organizationId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.organization) {
+                        setOrganization(data.organization);
+                        setDuration(data.organization.defaultAppointmentLength || 30);
+                    }
+                })
+                .catch(err => console.error("Failed to fetch organization:", err));
         }
     }, [open, organizationId]);
 
@@ -84,7 +101,6 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
         setError("");
 
         try {
-            const duration = schedulingSettings?.defaultDuration || 30;
             const payload = { patientId, doctorName, time, type, duration };
             const response = await axios.post("/api/appointments", payload);
             const data = response.data;
@@ -99,6 +115,7 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
             setDoctorName("");
             setTime("");
             setType("");
+            setDuration(organization?.defaultAppointmentLength || 30);
         } catch (err: any) {
             const msg = err?.response?.data?.error || err.message || "Failed to create appointment";
             setError(msg);
@@ -133,6 +150,18 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
                     </div>
                     <Input required value={doctorName} onChange={e => setDoctorName(e.target.value)} placeholder="Doctor name" className="w-full" />
                     <DatePicker value={time} onChange={setTime} mode="datetime-local" className="w-full" />
+                    <div className="w-full">
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">Duration (minutes)</label>
+                        <Input
+                            type="number"
+                            min="5"
+                            max="480"
+                            value={duration}
+                            onChange={e => setDuration(parseInt(e.target.value) || 30)}
+                            placeholder="30"
+                            className="w-full"
+                        />
+                    </div>
                     <Input value={type} onChange={e => setType(e.target.value)} placeholder="Type (e.g., Consultation)" className="w-full" />
                     <div className="flex justify-end gap-2 mt-3">
                         <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="px-4 py-2">Cancel</Button>
