@@ -28,6 +28,7 @@ export default async function SettingsPage() {
 			id: true,
 			name: true,
 			metadata: true,
+			defaultAppointmentLength: true,
 			members: {
 				select: {
 					role: true,
@@ -113,6 +114,7 @@ export default async function SettingsPage() {
 				}}
 				schedulingSettings={settings.scheduling}
 				notificationSettings={settings.notifications}
+				defaultAppointmentLength={organization.defaultAppointmentLength || 30}
 			/>
 		</div>
 	);
