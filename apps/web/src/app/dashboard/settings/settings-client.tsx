@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ import {
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { authClient } from "@/lib/auth-client";
-import { trpc, queryClient } from "@/utils/trpc";
+import { trpc } from "@/utils/trpc";
 
 type Plan = {
     id: string;
@@ -148,15 +147,8 @@ export default function SettingsClient({
         fetchPolarData();
     }, []);
 
-    // Mutation for saving settings
-    const saveSettingsMutation = useMutation({
-        mutationFn: async () => {
-            return trpc.settings.updateOrganizationSettings.mutate({
-                organizationId,
-                scheduling,
-                notifications,
-            });
-        },
+    // Mutation for saving settings via tRPC hooks
+    const saveSettingsMutation = trpc.settings.updateOrganizationSettings.useMutation({
         onSuccess: () => {
             toast.success("Settings saved successfully");
         },
@@ -167,7 +159,11 @@ export default function SettingsClient({
 
     // Save settings handler
     const saveSettings = () => {
-        saveSettingsMutation.mutate();
+        saveSettingsMutation.mutate({
+            organizationId,
+            scheduling,
+            notifications,
+        });
     };
 
 
