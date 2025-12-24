@@ -23,8 +23,11 @@ type OrganizationSettings = {
 	};
 };
 
-export async function GET() {
+export async function GET(request: Request) {
 	try {
+		const { searchParams } = new URL(request.url);
+		const queryOrgId = searchParams.get("organizationId");
+
 		const session = await auth.api.getSession({
 			headers: await headers(),
 		});
@@ -33,7 +36,7 @@ export async function GET() {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		const organizationId = await getUserOrganization(session.user.id);
+		const organizationId = queryOrgId || await getUserOrganization(session.user.id);
 		if (!organizationId) {
 			return NextResponse.json({ error: "No organization found" }, { status: 404 });
 		}
@@ -52,22 +55,24 @@ export async function GET() {
 			: {};
 
 		return NextResponse.json({
-			scheduling: settings.scheduling || {
-				defaultDuration: 30,
-				bufferTime: 15,
-				bookingWindow: 30,
-				cancellationPolicy: 24,
-			},
-			notifications: settings.notifications || {
-				emailReminders: true,
-				reminderTiming: 24,
-				fromEmail: "appointments@clinicore.com",
-				replyToEmail: "noreply@clinicore.com",
-				appointmentConfirmation: true,
-				appointmentReminder: true,
-				appointmentCancellation: true,
-				patientRegistration: false,
-			},
+			settings: {
+				scheduling: settings.scheduling || {
+					defaultDuration: 30,
+					bufferTime: 15,
+					bookingWindow: 30,
+					cancellationPolicy: 24,
+				},
+				notifications: settings.notifications || {
+					emailReminders: true,
+					reminderTiming: 24,
+					fromEmail: "appointments@clinicore.com",
+					replyToEmail: "noreply@clinicore.com",
+					appointmentConfirmation: true,
+					appointmentReminder: true,
+					appointmentCancellation: true,
+					patientRegistration: false,
+				},
+			}
 		});
 	} catch (error) {
 		console.error("Error fetching settings:", error);
