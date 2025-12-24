@@ -74,15 +74,28 @@ model Verification {
 }
 
 model Organization {
-  id                      String       @id
-  name                    String
-  slug                    String
-  logo                    String?
-  createdAt               DateTime
-  metadata                String?
-  defaultAppointmentLength Int?        @default(30)
-  members                 Member[]
-  invitations             Invitation[]
+  id                       String       @id
+  name                     String
+  slug                     String
+  logo                     String?
+  createdAt                DateTime
+  metadata                 String?
+  members                  Member[]
+  invitations              Invitation[]
+
+  // Scheduling Settings
+  defaultAppointmentLength Int?         @default(30)
+  bufferTime               Int?         @default(15)
+  bookingWindow            Int?         @default(30)
+  cancellationPolicy       Int?         @default(24)
+
+  // Notification Settings
+  emailReminders           Boolean?     @default(true)
+  reminderTiming           Int?         @default(24)
+  appointmentConfirmation  Boolean?     @default(true)
+  appointmentReminder      Boolean?     @default(true)
+  appointmentCancellation  Boolean?     @default(true)
+  patientRegistration      Boolean?     @default(false)
 
   @@unique([slug])
   @@map("organization")
