@@ -136,6 +136,7 @@ model Appointment {
   patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
   doctorName String
   time       DateTime
+  duration   Int      @default(30)
   type       String
   status     String   @default("scheduled")
   notes      String?
