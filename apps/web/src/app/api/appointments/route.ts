@@ -4,7 +4,7 @@ import { db } from "@my-better-t-app/db";
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
-		const { patientId, doctorName, time, type, status, notes } = body;
+		const { patientId, doctorName, time, type, status, notes, duration } = body;
 
 		if (!patientId || !doctorName || !time || !type) {
 			return NextResponse.json(
@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
 				patientId,
 				doctorName,
 				time: new Date(time),
+				duration: duration || 30,
 				type,
 				status: status || "scheduled",
 				notes: notes || null,

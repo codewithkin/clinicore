@@ -22,9 +22,17 @@ type Patient = {
     lastName: string;
 };
 
+type SchedulingSettings = {
+    defaultDuration?: number;
+    bufferTime?: number;
+    bookingWindow?: number;
+    cancellationPolicy?: number;
+};
+
 export default function NewAppointmentModal({ open, onClose, onCreate, organizationId }: Props) {
     const [patientId, setPatientId] = useState("");
     const [patients, setPatients] = useState<Patient[]>([]);
+    const [schedulingSettings, setSchedulingSettings] = useState<SchedulingSettings | null>(null);
     const [doctorName, setDoctorName] = useState("");
     const [time, setTime] = useState("");
     const [type, setType] = useState("");
@@ -33,10 +41,21 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
 
     useEffect(() => {
         if (open && organizationId) {
+            // Fetch patients
             fetch(`/api/patients?organizationId=${organizationId}`)
                 .then(res => res.json())
                 .then(data => setPatients(data.patients || []))
                 .catch(err => console.error("Failed to fetch patients:", err));
+
+            // Fetch scheduling settings
+            fetch(`/api/settings?organizationId=${organizationId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.settings?.scheduling) {
+                        setSchedulingSettings(data.settings.scheduling);
+                    }
+                })
+                .catch(err => console.error("Failed to fetch settings:", err));
         }
     }, [open, organizationId]);
 
@@ -48,11 +67,25 @@ export default function NewAppointmentModal({ open, onClose, onCreate, organizat
             setError("Please select a patient");
             return;
         }
+
+        // Validate booking window if set
+        if (schedulingSettings?.bookingWindow && time) {
+            const appointmentDate = new Date(time);
+            const maxBookingDate = new Date();
+            maxBookingDate.setDate(maxBookingDate.getDate() + schedulingSettings.bookingWindow);
+
+            if (appointmentDate > maxBookingDate) {
+                setError(`Appointments can only be booked up to ${schedulingSettings.bookingWindow} days in advance`);
+                return;
+            }
+        }
+
         setLoading(true);
         setError("");
 
         try {
-            const payload = { patientId, doctorName, time, type };
+            const duration = schedulingSettings?.defaultDuration || 30;
+            const payload = { patientId, doctorName, time, type, duration };
             const response = await axios.post("/api/appointments", payload);
             const data = response.data;
             onCreate?.(data.appointment);
