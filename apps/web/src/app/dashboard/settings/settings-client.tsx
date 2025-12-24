@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,6 @@ import {
     CreditCard,
     Calendar,
     Bell,
-    Plus,
-    Download,
-    ExternalLink,
-    Check,
     Clock,
     Mail,
     MessageSquare,
@@ -36,7 +32,6 @@ import {
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { authClient } from "@/lib/auth-client";
-import { trpc } from "@/utils/trpc";
 
 type Plan = {
     id: string;
@@ -59,22 +54,19 @@ type Usage = {
     storage: { used: number; limit: number };
 };
 
-type SchedulingSettings = {
-    defaultDuration?: number;
-    bufferTime?: number;
-    bookingWindow?: number;
-    cancellationPolicy?: number;
-};
-
-type NotificationSettings = {
-    emailReminders?: boolean;
-    reminderTiming?: number;
-    fromEmail?: string;
-    replyToEmail?: string;
-    appointmentConfirmation?: boolean;
-    appointmentReminder?: boolean;
-    appointmentCancellation?: boolean;
-    patientRegistration?: boolean;
+type OrganizationSettings = {
+    // Scheduling
+    defaultAppointmentLength: number;
+    bufferTime: number;
+    bookingWindow: number;
+    cancellationPolicy: number;
+    // Notifications
+    emailReminders: boolean;
+    reminderTiming: number;
+    appointmentConfirmation: boolean;
+    appointmentReminder: boolean;
+    appointmentCancellation: boolean;
+    patientRegistration: boolean;
 };
 
 type Props = {
@@ -82,9 +74,7 @@ type Props = {
     organizationId: string;
     currentPlan: Plan;
     usage: Usage;
-    schedulingSettings?: SchedulingSettings;
-    notificationSettings?: NotificationSettings;
-    defaultAppointmentLength?: number;
+    initialSettings: OrganizationSettings;
 };
 
 export default function SettingsClient({
@@ -92,13 +82,13 @@ export default function SettingsClient({
     organizationId,
     currentPlan,
     usage,
-    schedulingSettings: initialScheduling,
-    notificationSettings: initialNotifications,
-    defaultAppointmentLength: initialDefaultLength,
+    initialSettings,
 }: Props) {
     const [activeTab, setActiveTab] = useState("billing");
     const [customerState, setCustomerState] = useState<any>(null);
     const [loadingPolar, setLoadingPolar] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [savedSettings, setSavedSettings] = useState<OrganizationSettings>(initialSettings);
     const [openCards, setOpenCards] = useState({
         currentPlan: true,
         appointmentDefaults: true,
@@ -111,32 +101,18 @@ export default function SettingsClient({
         setOpenCards(prev => ({ ...prev, [cardName]: !prev[cardName] }));
     };
 
-    // Settings state
-    const [defaultAppointmentLength, setDefaultAppointmentLength] = useState<number>(initialDefaultLength || 30);
+    // Settings state - all settings in one object
+    const [settings, setSettings] = useState<OrganizationSettings>(initialSettings);
 
-    const [scheduling, setScheduling] = useState<SchedulingSettings>(initialScheduling || {
-        defaultDuration: 30,
-        bufferTime: 15,
-        bookingWindow: 30,
-        cancellationPolicy: 24,
-    });
-
-    const [notifications, setNotifications] = useState<NotificationSettings>(initialNotifications || {
-        emailReminders: true,
-        reminderTiming: 24,
-        fromEmail: "appointments@clinicore.com",
-        replyToEmail: "noreply@clinicore.com",
-        appointmentConfirmation: true,
-        appointmentReminder: true,
-        appointmentCancellation: true,
-        patientRegistration: false,
-    });
+    // Track if any settings have changed
+    const hasChanges = useMemo(() => {
+        return JSON.stringify(settings) !== JSON.stringify(savedSettings);
+    }, [settings, savedSettings]);
 
     // Fetch Polar customer state and subscriptions via Better Auth portal plugin
     useEffect(() => {
         const fetchPolarData = async () => {
             try {
-                // Get customer state (includes customer data, subscriptions, benefits, meters)
                 const stateResponse = await authClient.customer.state();
                 if (stateResponse.data) {
                     setCustomerState(stateResponse.data);
@@ -151,44 +127,38 @@ export default function SettingsClient({
         fetchPolarData();
     }, []);
 
-    // Mutation for saving settings via tRPC hooks
-    const saveSettingsMutation = trpc.settings.updateOrganizationSettings.useMutation({
-        onSuccess: () => {
-            toast.success("Settings saved successfully");
-        },
-        onError: (error: any) => {
-            toast.error(error.message || "Failed to save settings");
-        },
-    });
-
-    // Save settings handler
-    const saveSettings = () => {
-        saveSettingsMutation.mutate({
-            organizationId,
-            scheduling,
-            notifications,
-        });
-    };
-
-    // Save default appointment length
-    const saveDefaultAppointmentLength = async () => {
+    // Unified save handler - saves all settings at once
+    const saveAllSettings = async () => {
+        setSaving(true);
         try {
             const response = await fetch(`/api/organizations/${organizationId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ defaultAppointmentLength }),
+                body: JSON.stringify(settings),
             });
 
             if (!response.ok) {
-                throw new Error("Failed to update default appointment length");
+                const data = await response.json();
+                throw new Error(data.error || "Failed to save settings");
             }
 
-            toast.success("Default appointment length updated");
+            toast.success("Settings saved successfully");
+            // Update saved settings to match current (reset dirty state)
+            setSavedSettings({ ...settings });
         } catch (error: any) {
-            toast.error(error.message || "Failed to save default appointment length");
+            toast.error(error.message || "Failed to save settings");
+        } finally {
+            setSaving(false);
         }
     };
 
+    // Helper to update a single setting
+    const updateSetting = <K extends keyof OrganizationSettings>(
+        key: K,
+        value: OrganizationSettings[K]
+    ) => {
+        setSettings(prev => ({ ...prev, [key]: value }));
+    };
 
     return (
         <div className="space-y-6">
@@ -210,7 +180,6 @@ export default function SettingsClient({
 
                 {/* Billing & Plan Tab */}
                 <TabsContent value="billing" className="space-y-6">
-                    {/* Current Plan */}
                     <Collapsible open={openCards.currentPlan} onOpenChange={() => toggleCard('currentPlan')}>
                         <Card className="border-gray-200 rounded-2xl">
                             <CollapsibleTrigger asChild>
@@ -324,16 +293,16 @@ export default function SettingsClient({
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                                 <CardContent className="space-y-6">
-                                    {/* Organization Default */}
+                                    {/* Time Management */}
                                     <div className="space-y-4">
                                         <div className="pb-4 border-b border-gray-100">
                                             <h4 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-                                                <Calendar className="h-4 w-4 text-teal-600" />
-                                                Organization Defaults
+                                                <Clock className="h-4 w-4 text-teal-600" />
+                                                Time Management
                                             </h4>
                                         </div>
 
-                                        <div className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-2">
                                                     <Label htmlFor="defaultAppointmentLength" className="text-gray-700 font-medium">Default Appointment Length (minutes)</Label>
@@ -349,55 +318,8 @@ export default function SettingsClient({
                                                     type="number"
                                                     min="5"
                                                     max="480"
-                                                    value={defaultAppointmentLength}
-                                                    onChange={(e) => setDefaultAppointmentLength(parseInt(e.target.value) || 30)}
-                                                    className="bg-white max-w-xs"
-                                                    placeholder="30"
-                                                />
-                                            </div>
-
-                                            <Button
-                                                onClick={saveDefaultAppointmentLength}
-                                                className="bg-teal-600 hover:bg-teal-700 text-white font-medium"
-                                            >
-                                                Save Default Length
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    {/* Duration Settings */}
-                                    <div className="space-y-4">
-                                        <div className="pb-4 border-b border-gray-100">
-                                            <h4 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-                                                <Clock className="h-4 w-4 text-teal-600" />
-                                                Time Management
-                                            </h4>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Label htmlFor="defaultDuration" className="text-gray-700 font-medium">Default Appointment Duration (minutes)</Label>
-                                                    <div className="relative group inline-block">
-                                                        <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
-                                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
-                                                            Default length for newly scheduled appointments (5-480 minutes)
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <Input
-                                                    id="defaultDuration"
-                                                    type="number"
-                                                    min="5"
-                                                    max="480"
-                                                    value={scheduling.defaultDuration || 30}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value;
-                                                        const num = parseInt(value, 10);
-                                                        if (value === '' || !isNaN(num)) {
-                                                            setScheduling({ ...scheduling, defaultDuration: value === '' ? 30 : Math.max(5, Math.min(480, num)) });
-                                                        }
-                                                    }}
+                                                    value={settings.defaultAppointmentLength}
+                                                    onChange={(e) => updateSetting('defaultAppointmentLength', Math.max(5, Math.min(480, parseInt(e.target.value) || 30)))}
                                                     className="bg-white"
                                                     placeholder="30"
                                                 />
@@ -409,7 +331,7 @@ export default function SettingsClient({
                                                     <div className="relative group inline-block">
                                                         <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
                                                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
-                                                            Time between appointments for preparation/cleanup (0-240 minutes)
+                                                            Time between appointments for preparation/cleanup
                                                         </div>
                                                     </div>
                                                 </div>
@@ -418,14 +340,8 @@ export default function SettingsClient({
                                                     type="number"
                                                     min="0"
                                                     max="240"
-                                                    value={scheduling.bufferTime || 15}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value;
-                                                        const num = parseInt(value, 10);
-                                                        if (value === '' || !isNaN(num)) {
-                                                            setScheduling({ ...scheduling, bufferTime: value === '' ? 15 : Math.max(0, Math.min(240, num)) });
-                                                        }
-                                                    }}
+                                                    value={settings.bufferTime}
+                                                    onChange={(e) => updateSetting('bufferTime', Math.max(0, Math.min(240, parseInt(e.target.value) || 15)))}
                                                     className="bg-white"
                                                     placeholder="15"
                                                 />
@@ -442,69 +358,59 @@ export default function SettingsClient({
                                             </h4>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <Label htmlFor="bookingWindow" className="text-gray-700 font-medium">Booking Window (days in advance)</Label>
-                                                <div className="relative group inline-block">
-                                                    <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
-                                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
-                                                        How far in advance patients can book appointments (1-365 days)
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Label htmlFor="bookingWindow" className="text-gray-700 font-medium">Booking Window (days in advance)</Label>
+                                                    <div className="relative group inline-block">
+                                                        <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                            How far in advance appointments can be booked
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <Input
+                                                    id="bookingWindow"
+                                                    type="number"
+                                                    min="1"
+                                                    max="365"
+                                                    value={settings.bookingWindow}
+                                                    onChange={(e) => updateSetting('bookingWindow', Math.max(1, Math.min(365, parseInt(e.target.value) || 30)))}
+                                                    className="bg-white"
+                                                    placeholder="30"
+                                                />
                                             </div>
-                                            <Input
-                                                id="bookingWindow"
-                                                type="number"
-                                                min="1"
-                                                max="365"
-                                                value={scheduling.bookingWindow || 30}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    const num = parseInt(value, 10);
-                                                    if (value === '' || !isNaN(num)) {
-                                                        setScheduling({ ...scheduling, bookingWindow: value === '' ? 30 : Math.max(1, Math.min(365, num)) });
-                                                    }
-                                                }}
-                                                className="bg-white"
-                                                placeholder="30"
-                                            />
-                                        </div>
 
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <Label htmlFor="cancellationPolicy" className="text-gray-700 font-medium">Cancellation Notice Period (hours)</Label>
-                                                <div className="relative group inline-block">
-                                                    <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
-                                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
-                                                        Minimum notice required for appointment cancellations (0-168 hours = 7 days)
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Label htmlFor="cancellationPolicy" className="text-gray-700 font-medium">Cancellation Notice Period (hours)</Label>
+                                                    <div className="relative group inline-block">
+                                                        <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                            Minimum notice required for cancellations
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <Input
+                                                    id="cancellationPolicy"
+                                                    type="number"
+                                                    min="0"
+                                                    max="168"
+                                                    value={settings.cancellationPolicy}
+                                                    onChange={(e) => updateSetting('cancellationPolicy', Math.max(0, Math.min(168, parseInt(e.target.value) || 24)))}
+                                                    className="bg-white"
+                                                    placeholder="24"
+                                                />
                                             </div>
-                                            <Input
-                                                id="cancellationPolicy"
-                                                type="number"
-                                                min="0"
-                                                max="168"
-                                                value={scheduling.cancellationPolicy || 24}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    const num = parseInt(value, 10);
-                                                    if (value === '' || !isNaN(num)) {
-                                                        setScheduling({ ...scheduling, cancellationPolicy: value === '' ? 24 : Math.max(0, Math.min(168, num)) });
-                                                    }
-                                                }}
-                                                className="bg-white"
-                                                placeholder="24"
-                                            />
                                         </div>
                                     </div>
 
                                     <Button
-                                        onClick={saveSettings}
-                                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium mt-4"
-                                        disabled={saveSettingsMutation.isPending}
+                                        onClick={saveAllSettings}
+                                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={!hasChanges || saving}
                                     >
-                                        {saveSettingsMutation.isPending ? "Saving..." : "Save Scheduling Settings"}
+                                        {saving ? "Saving..." : hasChanges ? "Save Settings" : "No Changes"}
                                     </Button>
                                 </CardContent>
                             </CollapsibleContent>
@@ -561,19 +467,19 @@ export default function SettingsClient({
                                             </div>
                                         </div>
                                         <Switch
-                                            checked={notifications.emailReminders ?? true}
-                                            onCheckedChange={(checked) => setNotifications({ ...notifications, emailReminders: checked })}
+                                            checked={settings.emailReminders}
+                                            onCheckedChange={(checked) => updateSetting('emailReminders', checked)}
                                         />
                                     </div>
 
                                     <div className="space-y-3 pl-8">
                                         <div className="space-y-2">
-                                            <Label htmlFor="emailReminderTime">Reminder Timing</Label>
+                                            <Label htmlFor="reminderTiming">Reminder Timing</Label>
                                             <Select
-                                                value={String(notifications.reminderTiming || 24)}
-                                                onValueChange={(v) => setNotifications({ ...notifications, reminderTiming: Number(v) })}
+                                                value={String(settings.reminderTiming)}
+                                                onValueChange={(v) => updateSetting('reminderTiming', Number(v))}
                                             >
-                                                <SelectTrigger id="emailReminderTime">
+                                                <SelectTrigger id="reminderTiming">
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -585,36 +491,14 @@ export default function SettingsClient({
                                                 </SelectContent>
                                             </Select>
                                         </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="fromEmail">From Email Address</Label>
-                                            <Input
-                                                id="fromEmail"
-                                                type="email"
-                                                value={notifications.fromEmail || ""}
-                                                onChange={(e) => setNotifications({ ...notifications, fromEmail: e.target.value })}
-                                                placeholder="noreply@clinic.com"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="replyToEmail">Reply-To Email</Label>
-                                            <Input
-                                                id="replyToEmail"
-                                                type="email"
-                                                value={notifications.replyToEmail || ""}
-                                                onChange={(e) => setNotifications({ ...notifications, replyToEmail: e.target.value })}
-                                                placeholder="contact@clinic.com"
-                                            />
-                                        </div>
                                     </div>
 
                                     <Button
-                                        onClick={saveSettings}
-                                        className="w-full bg-teal-600 hover:bg-teal-700"
-                                        disabled={saveSettingsMutation.isPending}
+                                        onClick={saveAllSettings}
+                                        className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={!hasChanges || saving}
                                     >
-                                        {saveSettingsMutation.isPending ? "Saving..." : "Save Email Settings"}
+                                        {saving ? "Saving..." : hasChanges ? "Save Settings" : "No Changes"}
                                     </Button>
                                 </CardContent>
                             </CollapsibleContent>
@@ -646,7 +530,7 @@ export default function SettingsClient({
                                                 <p className="text-sm text-gray-500">Text patients before appointments</p>
                                             </div>
                                         </div>
-                                        <Switch />
+                                        <Switch disabled />
                                     </div>
 
                                     <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
@@ -707,18 +591,18 @@ export default function SettingsClient({
                                                 <p className="text-sm text-gray-500">{pref.description}</p>
                                             </div>
                                             <Switch
-                                                checked={notifications[pref.key] ?? true}
-                                                onCheckedChange={(checked) => setNotifications({ ...notifications, [pref.key]: checked })}
+                                                checked={settings[pref.key]}
+                                                onCheckedChange={(checked) => updateSetting(pref.key, checked)}
                                             />
                                         </div>
                                     ))}
 
                                     <Button
-                                        onClick={saveSettings}
-                                        className="w-full bg-teal-600 hover:bg-teal-700 mt-4"
-                                        disabled={saveSettingsMutation.isPending}
+                                        onClick={saveAllSettings}
+                                        className="w-full bg-teal-600 hover:bg-teal-700 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={!hasChanges || saving}
                                     >
-                                        {saveSettingsMutation.isPending ? "Saving..." : "Save Notification Settings"}
+                                        {saving ? "Saving..." : hasChanges ? "Save Settings" : "No Changes"}
                                     </Button>
                                 </CardContent>
                             </CollapsibleContent>

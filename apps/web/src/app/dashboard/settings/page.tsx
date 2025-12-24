@@ -27,8 +27,18 @@ export default async function SettingsPage() {
 		select: {
 			id: true,
 			name: true,
-			metadata: true,
+			// Scheduling settings
 			defaultAppointmentLength: true,
+			bufferTime: true,
+			bookingWindow: true,
+			cancellationPolicy: true,
+			// Notification settings
+			emailReminders: true,
+			reminderTiming: true,
+			appointmentConfirmation: true,
+			appointmentReminder: true,
+			appointmentCancellation: true,
+			patientRegistration: true,
 			members: {
 				select: {
 					role: true,
@@ -77,9 +87,6 @@ export default async function SettingsPage() {
 	// Mock storage usage (would need actual file storage tracking)
 	const storageUsedGB = 8.3;
 
-	// Parse settings from metadata
-	const settings = organization.metadata ? JSON.parse(organization.metadata) : {};
-
 	return (
 		<div className="space-y-6 p-3 md:p-6">
 			{/* Header */}
@@ -112,9 +119,18 @@ export default async function SettingsPage() {
 						limit: currentPlan.limits.storageGB,
 					},
 				}}
-				schedulingSettings={settings.scheduling}
-				notificationSettings={settings.notifications}
-				defaultAppointmentLength={organization.defaultAppointmentLength || 30}
+				initialSettings={{
+					defaultAppointmentLength: organization.defaultAppointmentLength ?? 30,
+					bufferTime: organization.bufferTime ?? 15,
+					bookingWindow: organization.bookingWindow ?? 30,
+					cancellationPolicy: organization.cancellationPolicy ?? 24,
+					emailReminders: organization.emailReminders ?? true,
+					reminderTiming: organization.reminderTiming ?? 24,
+					appointmentConfirmation: organization.appointmentConfirmation ?? true,
+					appointmentReminder: organization.appointmentReminder ?? true,
+					appointmentCancellation: organization.appointmentCancellation ?? true,
+					patientRegistration: organization.patientRegistration ?? false,
+				}}
 			/>
 		</div>
 	);
