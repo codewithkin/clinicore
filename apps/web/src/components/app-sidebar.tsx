@@ -3,14 +3,14 @@
 import {
 	LayoutDashboard,
 	Users,
-	ClipboardList,
 	UserCog,
 	CreditCard,
 	BarChart3,
 	Settings,
 	ChevronUp,
-	User2,
 	Building2,
+	Sparkles,
+	LogOut,
 } from "lucide-react";
 import {
 	Sidebar,
@@ -23,16 +23,19 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	useSidebar,
+	SidebarSeparator,
 } from "@/components/ui/sidebar";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter, usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import type { Plan } from "@/data/plans";
 
 // Navigation items for all users
 const coreNavItems = [
@@ -84,20 +87,26 @@ const settingsNavItem = {
 export function AppSidebar({
 	user,
 	isAdmin,
-	organization
+	organization,
+	currentPlan,
 }: {
 	user: any;
 	isAdmin: boolean;
 	organization: { id: string; name: string; logo: string | null; slug: string } | null;
+	currentPlan: Plan;
 }) {
 	const router = useRouter();
 	const pathname = usePathname();
-	const { open } = useSidebar();
 
 	const handleSignOut = async () => {
 		await authClient.signOut();
 		router.push("/auth/signin");
 	};
+
+	// Get user initials for avatar fallback
+	const userInitials = user?.name
+		? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+		: "U";
 
 	return (
 		<Sidebar collapsible="icon">
@@ -116,24 +125,29 @@ export function AppSidebar({
 									</div>
 								) : (
 									<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-teal-600 text-white">
-										<span className="text-sm font-bold">
+										<span className="text-sm font-semibold">
 											{organization?.name?.charAt(0).toUpperCase() || "C"}
 										</span>
 									</div>
 								)}
 								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-semibold">{organization?.name || "Clinicore"}</span>
-									<span className="truncate text-xs text-muted-foreground">Clinicore</span>
+									<span className="truncate font-semibold text-sidebar-foreground">
+										{organization?.name || "Clinicore"}
+									</span>
+									<span className="truncate text-xs text-muted-foreground">
+										{currentPlan.name} Plan
+									</span>
 								</div>
 							</a>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>
+
 			<SidebarContent>
 				{/* Core Navigation */}
 				<SidebarGroup>
-					<SidebarGroupLabel>Main</SidebarGroupLabel>
+					<SidebarGroupLabel>Overview</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{coreNavItems.map((item) => (
@@ -142,10 +156,9 @@ export function AppSidebar({
 										asChild
 										isActive={pathname === item.url}
 										tooltip={item.title}
-										className={pathname === item.url ? "text-white font-semibold" : "text-gray-600"}
 									>
 										<a href={item.url}>
-											<item.icon />
+											<item.icon className="size-4" />
 											<span>{item.title}</span>
 										</a>
 									</SidebarMenuButton>
@@ -167,34 +180,22 @@ export function AppSidebar({
 											asChild
 											isActive={pathname === item.url}
 											tooltip={item.title}
-											className={pathname === item.url ? "text-white font-semibold" : "text-gray-600"}
 										>
 											<a href={item.url}>
-												<item.icon />
+												<item.icon className="size-4" />
 												<span>{item.title}</span>
 											</a>
 										</SidebarMenuButton>
 									</SidebarMenuItem>
 								))}
-							</SidebarMenu>
-						</SidebarGroupContent>
-					</SidebarGroup>
-				)}
-
-				{/* Clinic Settings (Admin Only) */}
-				{isAdmin && (
-					<SidebarGroup>
-						<SidebarGroupContent>
-							<SidebarMenu>
 								<SidebarMenuItem>
 									<SidebarMenuButton
 										asChild
 										isActive={pathname === clinicNavItem.url}
 										tooltip={clinicNavItem.title}
-										className={pathname === clinicNavItem.url ? "text-white font-semibold" : "text-gray-600"}
 									>
 										<a href={clinicNavItem.url}>
-											<clinicNavItem.icon />
+											<clinicNavItem.icon className="size-4" />
 											<span>{clinicNavItem.title}</span>
 										</a>
 									</SidebarMenuButton>
@@ -213,10 +214,9 @@ export function AppSidebar({
 									asChild
 									isActive={pathname === settingsNavItem.url}
 									tooltip={settingsNavItem.title}
-									className={pathname === settingsNavItem.url ? "text-white font-semibold" : "text-gray-600"}
 								>
 									<a href={settingsNavItem.url}>
-										<settingsNavItem.icon />
+										<settingsNavItem.icon className="size-4" />
 										<span>{settingsNavItem.title}</span>
 									</a>
 								</SidebarMenuButton>
@@ -224,7 +224,33 @@ export function AppSidebar({
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
+
+				{/* Plan upgrade prompt for admins */}
+				{isAdmin && currentPlan.id !== "growing_clinic" && (
+					<>
+						<SidebarSeparator />
+						<SidebarGroup>
+							<SidebarGroupContent>
+								<SidebarMenu>
+									<SidebarMenuItem>
+										<SidebarMenuButton
+											asChild
+											tooltip="Upgrade Plan"
+											className="bg-linear-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 border border-teal-200"
+										>
+											<a href="/dashboard/billing">
+												<Sparkles className="size-4 text-teal-600" />
+												<span className="text-teal-700 font-medium">Upgrade Plan</span>
+											</a>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								</SidebarMenu>
+							</SidebarGroupContent>
+						</SidebarGroup>
+					</>
+				)}
 			</SidebarContent>
+
 			<SidebarFooter>
 				<SidebarMenu>
 					<SidebarMenuItem>
@@ -234,12 +260,19 @@ export function AppSidebar({
 									size="lg"
 									className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 								>
-									<User2 className="size-8 rounded-lg" />
+									<Avatar className="size-8 rounded-lg">
+										<AvatarImage src={user?.image || ""} alt={user?.name || "User"} />
+										<AvatarFallback className="rounded-lg bg-teal-100 text-teal-700 text-xs font-medium">
+											{userInitials}
+										</AvatarFallback>
+									</Avatar>
 									<div className="grid flex-1 text-left text-sm leading-tight">
 										<span className="truncate font-semibold">
 											{user?.name || "User"}
 										</span>
-										<span className="truncate text-xs">{user?.email}</span>
+										<span className="truncate text-xs text-muted-foreground">
+											{user?.email}
+										</span>
 									</div>
 									<ChevronUp className="ml-auto size-4" />
 								</SidebarMenuButton>
@@ -250,7 +283,13 @@ export function AppSidebar({
 								align="end"
 								sideOffset={4}
 							>
-								<DropdownMenuItem onClick={handleSignOut}>
+								<DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
+									<Settings className="mr-2 size-4" />
+									Settings
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
+									<LogOut className="mr-2 size-4" />
 									Sign out
 								</DropdownMenuItem>
 							</DropdownMenuContent>
