@@ -10,11 +10,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, UserPlus, CalendarPlus, Mail } from "lucide-react";
 import NewPatientModal from "./new-patient-modal";
-import NewAppointmentModal from "./new-appointment-modal";
+import NewAppointmentModalShared from "./new-appointment-modal-shared";
 
-export default function QuickActionsClient({ isAdmin, organizationId }: { isAdmin: boolean; organizationId?: string }) {
+type Props = {
+    isAdmin: boolean;
+    organizationId?: string;
+    onRefresh?: () => void;
+};
+
+export default function QuickActionsClient({ isAdmin, organizationId, onRefresh }: Props) {
     const [openPatient, setOpenPatient] = useState(false);
     const [openAppointment, setOpenAppointment] = useState(false);
+
+    const handlePatientSuccess = () => {
+        if (onRefresh) {
+            onRefresh();
+        }
+    };
+
+    const handleAppointmentSuccess = () => {
+        if (onRefresh) {
+            onRefresh();
+        }
+    };
 
     return (
         <>
@@ -47,8 +65,21 @@ export default function QuickActionsClient({ isAdmin, organizationId }: { isAdmi
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <NewPatientModal open={openPatient} onClose={() => setOpenPatient(false)} onCreate={(d) => console.log("patient created", d)} organizationId={organizationId} />
-            <NewAppointmentModal open={openAppointment} onClose={() => setOpenAppointment(false)} onCreate={(d) => console.log("appointment created", d)} organizationId={organizationId} />
+            <NewPatientModal
+                open={openPatient}
+                onClose={() => setOpenPatient(false)}
+                onCreate={handlePatientSuccess}
+                organizationId={organizationId}
+            />
+
+            {organizationId && (
+                <NewAppointmentModalShared
+                    open={openAppointment}
+                    onClose={() => setOpenAppointment(false)}
+                    organizationId={organizationId}
+                    onSuccess={handleAppointmentSuccess}
+                />
+            )}
         </>
     );
 }
