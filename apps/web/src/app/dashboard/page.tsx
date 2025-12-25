@@ -39,7 +39,7 @@ import {
 	calculateGrowthPercentage,
 	getMonthlyRevenue,
 } from "@/utils/dashboard-stats";
-import QuickActionsClient from "@/components/quick-actions-client";
+import DashboardQuickActions from "./dashboard-quick-actions";
 import ScheduleAppointmentClient from "@/components/schedule-appointment-client";
 import AppointmentsTableClient from "./appointments-table-client";
 
@@ -218,7 +218,7 @@ export default async function DashboardPage() {
 					</div>
 				</div>
 				<div className="flex gap-3">
-					<QuickActionsClient isAdmin={isAdminUser} organizationId={organizationId || undefined} />
+					<DashboardQuickActions isAdmin={isAdminUser} organizationId={organizationId || undefined} />
 				</div>
 			</div>
 
