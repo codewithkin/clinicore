@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { Separator } from "@/components/ui/separator";
 import { getUserOrganization, getUserRole, isAdmin as checkIsAdmin } from "@/lib/dashboard-helpers";
 import { db } from "@my-better-t-app/db";
+import plans from "@/data/plans";
 
 export default async function DashboardLayout({
 	children,
@@ -29,16 +30,30 @@ export default async function DashboardLayout({
 
 	// Fetch organization data for branding
 	let organization = null;
+	let currentPlan = plans[0]; // Default to Starter
+
 	if (organizationId) {
 		organization = await db.organization.findUnique({
 			where: { id: organizationId },
 			select: { id: true, name: true, logo: true, slug: true },
 		});
+
+		// Get admin's wanted_plan to determine current plan
+		const adminMember = await db.member.findFirst({
+			where: { organizationId, role: "admin" },
+			include: { user: { select: { wanted_plan: true } } },
+		});
+
+		const planId = adminMember?.user.wanted_plan as string | null;
+		if (planId) {
+			const foundPlan = plans.find((p) => p.id === planId);
+			if (foundPlan) currentPlan = foundPlan;
+		}
 	}
 
 	return (
 		<SidebarProvider>
-			<AppSidebar user={session.user} isAdmin={isAdmin} organization={organization} />
+			<AppSidebar user={session.user} isAdmin={isAdmin} organization={organization} currentPlan={currentPlan} />
 			<SidebarInset>
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 					<SidebarTrigger className="-ml-1" />

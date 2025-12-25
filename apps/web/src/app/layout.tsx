@@ -1,19 +1,13 @@
 import type { Metadata } from "next";
-import { Montserrat, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "../index.css";
 import Providers from "@/components/providers";
 
-// Google Fonts
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"], // Regular, Medium, Bold
-});
-
+// Google Fonts - Using Inter as the primary font
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 // SEO Metadata
@@ -47,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${montserrat.variable} ${inter.variable} antialiased`}
+        className={`${inter.variable} font-sans antialiased`}
       >
         <Providers>
           <div className="grid grid-rows-[auto_1fr] h-svh">
