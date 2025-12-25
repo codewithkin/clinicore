@@ -5,9 +5,10 @@ import { db } from "@my-better-t-app/db";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, Calendar, MapPin, User, ArrowLeft } from "lucide-react";
+import { Mail, Phone, Calendar, MapPin, User, ArrowLeft, FileText, Stethoscope } from "lucide-react";
 import Link from "next/link";
 import { getUserOrganization } from "@/lib/dashboard-helpers";
+import PatientMedicalRecordsClient from "./patient-medical-records-client";
 
 export default async function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -33,6 +34,19 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
             appointments: {
                 orderBy: { time: "desc" },
                 take: 10,
+            },
+            medicalRecords: {
+                orderBy: { visitDate: "desc" },
+                include: {
+                    appointment: {
+                        select: {
+                            id: true,
+                            time: true,
+                            type: true,
+                            doctorName: true,
+                        },
+                    },
+                },
             },
         },
     });
@@ -130,6 +144,10 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
                                 <p className="text-2xl font-bold text-gray-900 mt-1">{patient.appointments.length}</p>
                             </div>
                             <div>
+                                <label className="text-sm font-medium text-gray-500">Medical Records</label>
+                                <p className="text-2xl font-bold text-gray-900 mt-1">{patient.medicalRecords.length}</p>
+                            </div>
+                            <div>
                                 <label className="text-sm font-medium text-gray-500">Patient Since</label>
                                 <p className="text-gray-900 mt-1">
                                     {new Date(patient.createdAt).toLocaleDateString("en-US", {
@@ -142,6 +160,14 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Medical Records Section */}
+            <PatientMedicalRecordsClient
+                patientId={patient.id}
+                patientName={`${patient.firstName} ${patient.lastName}`}
+                initialRecords={patient.medicalRecords}
+                appointments={patient.appointments}
+            />
 
             {/* Appointment History */}
             <Card className="border-gray-200 rounded-2xl">
