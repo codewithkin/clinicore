@@ -274,3 +274,4 @@ export const yearlyPlans = {
 };
 
 export { sendInvitationEmail } from "./utils/sendInvitationEmail";
+export { sendAppointmentReminder } from "./utils/sendAppointmentReminder";
