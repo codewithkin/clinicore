@@ -129,7 +129,7 @@ model Invitation {
 }
 
 model Patient {
-  id             String        @id @default(cuid())
+  id             String          @id @default(cuid())
   firstName      String
   lastName       String
   email          String?
@@ -137,25 +137,87 @@ model Patient {
   dateOfBirth    DateTime?
   address        String?
   organizationId String
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   appointments   Appointment[]
+  medicalRecords MedicalRecord[]
 
   @@map("patient")
 }
 
+model MedicalRecord {
+  id             String    @id @default(cuid())
+  patientId      String
+  patient        Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointmentId  String?
+  appointment    Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  
+  // Visit Information
+  visitDate      DateTime  @default(now())
+  visitType      String    // consultation, follow-up, procedure, emergency
+  chiefComplaint String?   // Main reason for visit
+  
+  // Clinical Notes
+  diagnosis      String?
+  symptoms       String?
+  treatment      String?
+  prescription   String?
+  notes          String?
+  
+  // Vitals (optional)
+  bloodPressure  String?
+  heartRate      Int?
+  temperature    Float?
+  weight         Float?
+  height         Float?
+  
+  // Follow-up
+  followUpDate   DateTime?
+  followUpNotes  String?
+  
+  // Metadata
+  createdBy      String    // Doctor/staff who created the record
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("medical_record")
+}
+
 model Appointment {
-  id         String   @id @default(cuid())
-  patientId  String
-  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  doctorName String
-  time       DateTime
-  duration   Int      @default(30)
-  type       String
-  status     String   @default("scheduled")
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String          @id @default(cuid())
+  patientId       String
+  patient         Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId        String?         // User ID of the doctor
+  doctorName      String
+  time            DateTime
+  duration        Int             @default(30)
+  type            String          // consultation, follow-up, procedure, checkup
+  status          String          @default("scheduled") // scheduled, confirmed, completed, cancelled, no-show
+  notes           String?
+  organizationId  String?
+  
+  // Reminder tracking
+  reminderSent    Boolean         @default(false)
+  reminderSentAt  DateTime?
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  medicalRecords  MedicalRecord[]
 
   @@map("appointment")
+}
+
+// Track email usage for billing limits
+model EmailLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  recipientEmail String
+  emailType      String   // appointment_reminder, appointment_confirmation, etc.
+  subject        String
+  status         String   @default("sent") // sent, failed, bounced
+  appointmentId  String?
+  sentAt         DateTime @default(now())
+  
+  @@index([organizationId, sentAt])
+  @@map("email_log")
 }
