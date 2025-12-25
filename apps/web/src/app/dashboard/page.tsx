@@ -4,26 +4,13 @@ import { auth } from "@my-better-t-app/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-	DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
 	Users,
 	Calendar,
 	DollarSign,
-	TrendingUp,
-	Clock,
-	ArrowUpRight,
 	UserCheck,
 	UserCog,
-	ChevronDown,
-	UserPlus,
-	CalendarPlus,
-	Mail
 } from "lucide-react";
+import StatItem from "@/components/stat-item";
 import { getUserRole, isAdmin, getUserOrganization } from "@/lib/dashboard-helpers";
 import { formatPrice } from "@/lib/formatters";
 import { getStartOfToday, getStartOfTomorrow } from "@/utils/date-helpers";
@@ -112,78 +99,71 @@ export default async function DashboardPage() {
 	const statsData = isAdminUser
 		? [
 			{
-				title: "Total Patients",
+				label: "Total Patients",
 				value: totalPatients.toLocaleString(),
-				change: `+${patientGrowth}% from last month`,
+				change: `+${patientGrowth}% vs last month`,
 				trend: "up" as const,
 				icon: Users,
-				color: "text-white",
-				bgColor: "bg-teal-600",
-				borderColor: "border-teal-600"
+				iconColor: "text-teal-600",
+				iconBgColor: "bg-teal-50",
 			},
 			{
-				title: "Appointments Today",
+				label: "Today's Appointments",
 				value: todayAppointmentsCount.toString(),
-				change: `${pendingAppointmentsCount} pending confirmation`,
+				change: `${pendingAppointmentsCount} pending`,
 				trend: "neutral" as const,
 				icon: Calendar,
-				color: "text-gray-700",
-				bgColor: "bg-white",
-				borderColor: "border-gray-200"
+				iconColor: "text-blue-600",
+				iconBgColor: "bg-blue-50",
 			},
 			{
-				title: "Monthly Revenue",
+				label: "Monthly Revenue",
 				value: formatPrice(monthlyRevenue),
-				change: "+18% from last month",
+				change: "+18% vs last month",
 				trend: "up" as const,
 				icon: DollarSign,
-				color: "text-gray-700",
-				bgColor: "bg-white",
-				borderColor: "border-gray-200"
+				iconColor: "text-green-600",
+				iconBgColor: "bg-green-50",
 			},
 			{
-				title: "Active Staff",
+				label: "Active Staff",
 				value: activeStaffCount.toString(),
-				change: "Total staff members",
+				change: "Total members",
 				trend: "neutral" as const,
 				icon: UserCog,
-				color: "text-gray-700",
-				bgColor: "bg-white",
-				borderColor: "border-gray-200"
+				iconColor: "text-purple-600",
+				iconBgColor: "bg-purple-50",
 			}
 		]
 		: [
 			{
-				title: "Today's Appointments",
+				label: "Today's Appointments",
 				value: todayAppointmentsCount.toString(),
 				change: nextAppointment
 					? `Next at ${new Date(nextAppointment.time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`
 					: "No more today",
 				trend: "neutral" as const,
 				icon: Calendar,
-				color: "text-white",
-				bgColor: "bg-teal-600",
-				borderColor: "border-teal-600"
+				iconColor: "text-teal-600",
+				iconBgColor: "bg-teal-50",
 			},
 			{
-				title: "Pending Check-ins",
+				label: "Pending Check-ins",
 				value: pendingCheckIns.toString(),
-				change: pendingCheckIns > 0 ? "Overdue check-ins" : "All checked in",
+				change: pendingCheckIns > 0 ? "Overdue" : "All checked in",
 				trend: "neutral" as const,
 				icon: UserCheck,
-				color: "text-gray-700",
-				bgColor: "bg-white",
-				borderColor: "border-gray-200"
+				iconColor: "text-orange-600",
+				iconBgColor: "bg-orange-50",
 			},
 			{
-				title: "Total Patients",
+				label: "Total Patients",
 				value: totalPatients.toLocaleString(),
-				change: `${recentPatients} registered this week`,
+				change: `${recentPatients} this week`,
 				trend: "neutral" as const,
 				icon: Users,
-				color: "text-gray-700",
-				bgColor: "bg-white",
-				borderColor: "border-gray-200"
+				iconColor: "text-blue-600",
+				iconBgColor: "bg-blue-50",
 			}
 		];
 
@@ -222,42 +202,20 @@ export default async function DashboardPage() {
 				</div>
 			</div>
 
-			{/* Stats Cards */}
-			<div className="flex flex-wrap gap-4">
-				{statsData.map((stat, index) => {
-					const Icon = stat.icon;
-					const isFirst = index === 0;
-					return (
-						<Card key={stat.title} className={`${isFirst ? stat.bgColor : "bg-white"} border ${stat.borderColor} rounded-2xl overflow-hidden hover:shadow-lg transition-shadow flex-1 min-w-[200px]`}>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className={`text-sm font-medium ${isFirst ? "text-white/90" : "text-gray-600"}`}>
-									{stat.title}
-								</CardTitle>
-								<button className={`p-2 rounded-full ${isFirst ? "bg-white/20" : "bg-gray-100"} hover:scale-110 transition-transform`}>
-									<ArrowUpRight className={`h-4 w-4 ${isFirst ? "text-white" : "text-gray-700"}`} />
-								</button>
-							</CardHeader>
-							<CardContent className="space-y-1">
-								<div className={`text-3xl font-bold ${isFirst ? "text-white" : "text-gray-900"}`}>
-									{stat.value}
-								</div>
-								<div className="flex items-center gap-1.5">
-									{stat.trend === "up" && (
-										<div className={`flex items-center gap-1 text-xs ${isFirst ? "text-white/80" : "text-green-600"}`}>
-											<TrendingUp className="h-3 w-3" />
-											{isFirst ? "Increased from last month" : stat.change}
-										</div>
-									)}
-									{stat.trend !== "up" && (
-										<p className={`text-xs ${isFirst ? "text-white/80" : "text-gray-500"}`}>
-											{stat.change}
-										</p>
-									)}
-								</div>
-							</CardContent>
-						</Card>
-					);
-				})}
+			{/* Stats */}
+			<div className="flex flex-wrap gap-8">
+				{statsData.map((stat) => (
+					<StatItem
+						key={stat.label}
+						icon={stat.icon}
+						iconColor={stat.iconColor}
+						iconBgColor={stat.iconBgColor}
+						value={stat.value}
+						label={stat.label}
+						change={stat.change}
+						trend={stat.trend}
+					/>
+				))}
 			</div>
 
 			{/* Appointments and Patients Section */}
