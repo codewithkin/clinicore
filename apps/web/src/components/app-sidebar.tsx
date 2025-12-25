@@ -11,6 +11,7 @@ import {
 	Building2,
 	Sparkles,
 	LogOut,
+	CalendarDays,
 } from "lucide-react";
 import {
 	Sidebar,
@@ -43,6 +44,11 @@ const coreNavItems = [
 		title: "Dashboard",
 		url: "/dashboard",
 		icon: LayoutDashboard,
+	},
+	{
+		title: "Appointments",
+		url: "/dashboard/appointments",
+		icon: CalendarDays,
 	},
 	{
 		title: "Patients",
