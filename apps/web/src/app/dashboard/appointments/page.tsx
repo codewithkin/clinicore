@@ -5,6 +5,7 @@ import { db } from "@my-better-t-app/db";
 import { getUserOrganization, getUserRole, isAdmin as checkIsAdmin } from "@/lib/dashboard-helpers";
 import AppointmentsClient from "./appointments-client";
 
+
 export default async function AppointmentsPage() {
     const session = await auth.api.getSession({
         headers: await headers(),
