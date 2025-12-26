@@ -29,7 +29,9 @@ export async function POST(
 			return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
 		}
 
-		if (!appointment.organizationId) {
+		// Get organizationId from appointment or fall back to patient's organizationId
+		const organizationId = appointment.organizationId || appointment.patient.organizationId;
+		if (!organizationId) {
 			return NextResponse.json({ error: "Appointment has no organization" }, { status: 400 });
 		}
 
@@ -37,7 +39,7 @@ export async function POST(
 		const userOrg = await prisma.member.findFirst({
 			where: {
 				userId: session.user.id,
-				organizationId: appointment.organizationId,
+				organizationId,
 			},
 		});
 
@@ -54,7 +56,7 @@ export async function POST(
 
 		// Get organization name
 		const organization = await prisma.organization.findUnique({
-			where: { id: appointment.organizationId },
+			where: { id: organizationId },
 		});
 
 		if (!organization) {
@@ -66,7 +68,7 @@ export async function POST(
 		const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 		const emailCount = await prisma.emailLog.count({
 			where: {
-				organizationId: appointment.organizationId,
+				organizationId,
 				sentAt: {
 					gte: startOfMonth,
 				},
@@ -104,7 +106,7 @@ export async function POST(
 		// Log the email
 		await prisma.emailLog.create({
 			data: {
-				organizationId: appointment.organizationId,
+				organizationId,
 				recipientEmail: appointment.patient.email,
 				emailType: "appointment_reminder",
 				subject: `Appointment Reminder - ${appointmentTime.toLocaleDateString()}`,
