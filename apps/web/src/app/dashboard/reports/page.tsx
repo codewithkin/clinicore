@@ -17,7 +17,6 @@ import { getUserOrganization } from "@/lib/dashboard-helpers";
 import { formatPrice } from "@/lib/formatters";
 import { db } from "@my-better-t-app/db";
 import ExportButton from "@/components/export-button";
-import StatItem from "@/components/stat-item";
 
 export default async function ReportsPage() {
 	const session = await auth.api.getSession({
@@ -193,43 +192,78 @@ export default async function ReportsPage() {
 			</div>
 
 			{/* Key Metrics */}
-			<div className="flex flex-wrap gap-8">
-				<StatItem
-					icon={Users}
-					iconColor="text-teal-600"
-					iconBgColor="bg-teal-50"
-					value={totalPatients.toString()}
-					label="Total Patients"
-					change={`${parseFloat(patientGrowth) >= 0 ? '+' : ''}${patientGrowth}% vs last month`}
-					trend={parseFloat(patientGrowth) >= 0 ? "up" : "down"}
-				/>
-				<StatItem
-					icon={Calendar}
-					iconColor="text-blue-600"
-					iconBgColor="bg-blue-50"
-					value={totalAppointments.toString()}
-					label="Total Appointments"
-					change={`${parseFloat(appointmentGrowth) >= 0 ? '+' : ''}${appointmentGrowth}% vs last month`}
-					trend={parseFloat(appointmentGrowth) >= 0 ? "up" : "down"}
-				/>
-				<StatItem
-					icon={UserCheck}
-					iconColor="text-green-600"
-					iconBgColor="bg-green-50"
-					value={`${completionRate}%`}
-					label="Completion Rate"
-					change={`${completedAppointments} completed`}
-					trend="neutral"
-				/>
-				<StatItem
-					icon={Activity}
-					iconColor="text-orange-600"
-					iconBgColor="bg-orange-50"
-					value={`${noShowRate}%`}
-					label="No-Show Rate"
-					change={`${noShowAppointments} no-shows`}
-					trend="neutral"
-				/>
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+				<Card className="border-gray-200 rounded-2xl">
+					<CardHeader className="pb-2">
+						<CardDescription className="text-gray-600">Total Patients</CardDescription>
+						<CardTitle className="text-3xl font-bold text-gray-900">{totalPatients}</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="flex items-center gap-1.5">
+							{parseFloat(patientGrowth) >= 0 ? (
+								<>
+									<TrendingUp className="h-4 w-4 text-green-600" />
+									<span className="text-sm text-green-600 font-medium">+{patientGrowth}%</span>
+								</>
+							) : (
+								<>
+									<TrendingDown className="h-4 w-4 text-red-600" />
+									<span className="text-sm text-red-600 font-medium">{patientGrowth}%</span>
+								</>
+							)}
+							<span className="text-sm text-gray-500 ml-1">vs last month</span>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card className="border-gray-200 rounded-2xl">
+					<CardHeader className="pb-2">
+						<CardDescription className="text-gray-600">Total Appointments</CardDescription>
+						<CardTitle className="text-3xl font-bold text-gray-900">{totalAppointments}</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="flex items-center gap-1.5">
+							{parseFloat(appointmentGrowth) >= 0 ? (
+								<>
+									<TrendingUp className="h-4 w-4 text-green-600" />
+									<span className="text-sm text-green-600 font-medium">+{appointmentGrowth}%</span>
+								</>
+							) : (
+								<>
+									<TrendingDown className="h-4 w-4 text-red-600" />
+									<span className="text-sm text-red-600 font-medium">{appointmentGrowth}%</span>
+								</>
+							)}
+							<span className="text-sm text-gray-500 ml-1">vs last month</span>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card className="border-gray-200 rounded-2xl">
+					<CardHeader className="pb-2">
+						<CardDescription className="text-gray-600">Completion Rate</CardDescription>
+						<CardTitle className="text-3xl font-bold text-gray-900">{completionRate}%</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="flex items-center gap-1.5">
+							<UserCheck className="h-4 w-4 text-blue-600" />
+							<span className="text-sm text-gray-500">{completedAppointments} completed</span>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card className="border-gray-200 rounded-2xl">
+					<CardHeader className="pb-2">
+						<CardDescription className="text-gray-600">No-Show Rate</CardDescription>
+						<CardTitle className="text-3xl font-bold text-gray-900">{noShowRate}%</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="flex items-center gap-1.5">
+							<Activity className="h-4 w-4 text-orange-600" />
+							<span className="text-sm text-gray-500">{noShowAppointments} no-shows</span>
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 
 			{/* Monthly Comparison */}
