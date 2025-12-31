@@ -28,6 +28,11 @@ export default async function PatientsPage() {
 			phone: true,
 			dateOfBirth: true,
 			createdAt: true,
+			_count: {
+				select: {
+					appointments: true,
+				},
+			},
 		}
 	}) : [];
 

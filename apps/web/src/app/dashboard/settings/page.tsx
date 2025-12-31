@@ -39,6 +39,10 @@ export default async function SettingsPage() {
 			appointmentReminder: true,
 			appointmentCancellation: true,
 			patientRegistration: true,
+			// Metric settings
+			weightUnit: true,
+			heightUnit: true,
+			temperatureUnit: true,
 			members: {
 				select: {
 					role: true,
@@ -130,6 +134,9 @@ export default async function SettingsPage() {
 					appointmentReminder: organization.appointmentReminder ?? true,
 					appointmentCancellation: organization.appointmentCancellation ?? true,
 					patientRegistration: organization.patientRegistration ?? false,
+					weightUnit: organization.weightUnit ?? "kg",
+					heightUnit: organization.heightUnit ?? "cm",
+					temperatureUnit: organization.temperatureUnit ?? "celsius",
 				}}
 			/>
 		</div>

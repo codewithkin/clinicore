@@ -23,6 +23,22 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
 
     const organizationId = await getUserOrganization(session.user.id);
 
+    // Fetch organization metric settings
+    const organization = organizationId ? await db.organization.findUnique({
+        where: { id: organizationId },
+        select: {
+            weightUnit: true,
+            heightUnit: true,
+            temperatureUnit: true,
+        },
+    }) : null;
+
+    const metricSettings = {
+        weightUnit: organization?.weightUnit ?? "kg",
+        heightUnit: organization?.heightUnit ?? "cm",
+        temperatureUnit: organization?.temperatureUnit ?? "celsius",
+    };
+
     // Fetch patient details
     if (!id) {
         redirect("/dashboard/patients");
@@ -167,6 +183,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
                 patientName={`${patient.firstName} ${patient.lastName}`}
                 initialRecords={patient.medicalRecords}
                 appointments={patient.appointments}
+                metricSettings={metricSettings}
             />
 
             {/* Appointment History */}

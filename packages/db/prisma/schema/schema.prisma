@@ -97,6 +97,11 @@ model Organization {
   appointmentCancellation  Boolean?     @default(true)
   patientRegistration      Boolean?     @default(false)
 
+  // Metric/Unit Settings
+  weightUnit               String?      @default("kg")      // kg, lbs
+  heightUnit               String?      @default("cm")      // cm, ft_in (feet & inches), m (meters)
+  temperatureUnit          String?      @default("celsius") // celsius, fahrenheit
+
   @@unique([slug])
   @@map("organization")
 }

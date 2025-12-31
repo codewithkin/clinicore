@@ -49,6 +49,10 @@ export async function GET(
                 appointmentReminder: true,
                 appointmentCancellation: true,
                 patientRegistration: true,
+                // Metric settings
+                weightUnit: true,
+                heightUnit: true,
+                temperatureUnit: true,
             },
         });
 
@@ -93,7 +97,7 @@ export async function PATCH(
         const body = await request.json();
 
         // Build update data from request body
-        const updateData: Record<string, number | boolean | null> = {};
+        const updateData: Record<string, number | boolean | string | null> = {};
 
         // Scheduling settings
         if (body.defaultAppointmentLength !== undefined) {
@@ -129,6 +133,17 @@ export async function PATCH(
             updateData.patientRegistration = Boolean(body.patientRegistration);
         }
 
+        // Metric settings
+        if (body.weightUnit !== undefined) {
+            updateData.weightUnit = body.weightUnit || null;
+        }
+        if (body.heightUnit !== undefined) {
+            updateData.heightUnit = body.heightUnit || null;
+        }
+        if (body.temperatureUnit !== undefined) {
+            updateData.temperatureUnit = body.temperatureUnit || null;
+        }
+
         const organization = await db.organization.update({
             where: { id },
             data: updateData,
@@ -147,6 +162,9 @@ export async function PATCH(
                 appointmentReminder: true,
                 appointmentCancellation: true,
                 patientRegistration: true,
+                weightUnit: true,
+                heightUnit: true,
+                temperatureUnit: true,
             },
         });
 

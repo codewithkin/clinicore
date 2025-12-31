@@ -17,6 +17,7 @@ import {
     MessageSquare,
     ChevronDown,
     Info,
+    Ruler,
 } from "lucide-react";
 import {
     Select,
@@ -67,6 +68,10 @@ type OrganizationSettings = {
     appointmentReminder: boolean;
     appointmentCancellation: boolean;
     patientRegistration: boolean;
+    // Metrics
+    weightUnit: string;
+    heightUnit: string;
+    temperatureUnit: string;
 };
 
 type Props = {
@@ -95,6 +100,7 @@ export default function SettingsClient({
         emailReminders: true,
         smsReminders: true,
         notificationPreferences: true,
+        unitPreferences: true,
     });
 
     const toggleCard = (cardName: keyof typeof openCards) => {
@@ -175,6 +181,10 @@ export default function SettingsClient({
                     <TabsTrigger value="notifications" className="gap-2">
                         <Bell className="h-4 w-4" />
                         <span className="hidden sm:inline">Notifications</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="metrics" className="gap-2">
+                        <Ruler className="h-4 w-4" />
+                        <span className="hidden sm:inline">Metrics</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -600,6 +610,122 @@ export default function SettingsClient({
                                     <Button
                                         onClick={saveAllSettings}
                                         className="w-full bg-teal-600 hover:bg-teal-700 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={!hasChanges || saving}
+                                    >
+                                        {saving ? "Saving..." : hasChanges ? "Save Settings" : "No Changes"}
+                                    </Button>
+                                </CardContent>
+                            </CollapsibleContent>
+                        </Card>
+                    </Collapsible>
+                </TabsContent>
+
+                {/* Metrics Tab */}
+                <TabsContent value="metrics" className="space-y-6">
+                    <Collapsible open={openCards.unitPreferences} onOpenChange={() => toggleCard('unitPreferences')}>
+                        <Card className="border-gray-200 rounded-2xl">
+                            <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-lg font-semibold text-gray-900">Units of Measurement</CardTitle>
+                                            <CardDescription className="text-sm text-gray-500 mt-1">
+                                                Configure preferred units for weight, height, and temperature across your clinic
+                                            </CardDescription>
+                                        </div>
+                                        <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${openCards.unitPreferences ? 'rotate-180' : ''}`} />
+                                    </div>
+                                </CardHeader>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <CardContent className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {/* Weight Unit */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="weightUnit" className="text-gray-700 font-medium">Weight</Label>
+                                                <div className="relative group inline-block">
+                                                    <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                        Unit used for patient weight measurements
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Select
+                                                value={settings.weightUnit}
+                                                onValueChange={(v) => updateSetting('weightUnit', v)}
+                                            >
+                                                <SelectTrigger id="weightUnit">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                                                    <SelectItem value="lbs">Pounds (lbs)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {/* Height Unit */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="heightUnit" className="text-gray-700 font-medium">Height</Label>
+                                                <div className="relative group inline-block">
+                                                    <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                        Unit used for patient height measurements
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Select
+                                                value={settings.heightUnit}
+                                                onValueChange={(v) => updateSetting('heightUnit', v)}
+                                            >
+                                                <SelectTrigger id="heightUnit">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="cm">Centimeters (cm)</SelectItem>
+                                                    <SelectItem value="m">Meters (m)</SelectItem>
+                                                    <SelectItem value="ft_in">Feet & Inches (ft/in)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {/* Temperature Unit */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="temperatureUnit" className="text-gray-700 font-medium">Temperature</Label>
+                                                <div className="relative group inline-block">
+                                                    <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                                                        Unit used for patient temperature measurements
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Select
+                                                value={settings.temperatureUnit}
+                                                onValueChange={(v) => updateSetting('temperatureUnit', v)}
+                                            >
+                                                <SelectTrigger id="temperatureUnit">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="celsius">Celsius (°C)</SelectItem>
+                                                    <SelectItem value="fahrenheit">Fahrenheit (°F)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                        <p className="text-sm text-gray-700">
+                                            <span className="font-medium">Note:</span> These unit preferences will be applied across the application, including medical records and patient vitals. Existing records will display in the new units.
+                                        </p>
+                                    </div>
+
+                                    <Button
+                                        onClick={saveAllSettings}
+                                        className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={!hasChanges || saving}
                                     >
                                         {saving ? "Saving..." : hasChanges ? "Save Settings" : "No Changes"}

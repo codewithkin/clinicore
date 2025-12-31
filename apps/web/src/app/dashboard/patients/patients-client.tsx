@@ -34,6 +34,9 @@ type Patient = {
     phone: string | null;
     dateOfBirth: Date | null;
     createdAt: Date;
+    _count?: {
+        appointments: number;
+    };
 };
 
 type Props = {
@@ -138,6 +141,7 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
                                 { header: "Email", accessor: (p) => p.email || "N/A" },
                                 { header: "Phone", accessor: (p) => p.phone || "N/A" },
                                 { header: "Date of Birth", accessor: (p) => p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString("en-US") : "Not set" },
+                                { header: "Appointments", accessor: (p) => p._count?.appointments || 0 },
                                 { header: "Registered", accessor: (p) => new Date(p.createdAt).toLocaleDateString("en-US") },
                             ]}
                         />
@@ -174,6 +178,9 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
                                         </th>
                                         <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                             Date of Birth
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            Appointments
                                         </th>
                                         <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                             Registered
@@ -236,6 +243,13 @@ export default function PatientsClient({ initialPatients, organizationId }: Prop
                                                     ) : (
                                                         <span className="text-gray-400">Not set</span>
                                                     )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-600">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                        {patient._count?.appointments || 0} {(patient._count?.appointments ?? 0) === 1 ? 'appointment' : 'appointments'}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">

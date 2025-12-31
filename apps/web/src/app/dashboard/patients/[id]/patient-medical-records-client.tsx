@@ -55,11 +55,18 @@ type MedicalRecord = {
     createdAt: string | Date;
 };
 
+type MetricSettings = {
+    weightUnit: string;
+    heightUnit: string;
+    temperatureUnit: string;
+};
+
 type Props = {
     patientId: string;
     patientName: string;
     initialRecords: MedicalRecord[];
     appointments: Appointment[];
+    metricSettings: MetricSettings;
 };
 
 const VISIT_TYPES = [
@@ -71,11 +78,74 @@ const VISIT_TYPES = [
     "Vaccination",
 ];
 
+// Unit label helpers
+const getWeightLabel = (unit: string) => {
+    switch (unit) {
+        case "lbs": return "lbs";
+        case "kg":
+        default: return "kg";
+    }
+};
+
+const getHeightLabel = (unit: string) => {
+    switch (unit) {
+        case "ft_in": return "ft/in";
+        case "m": return "m";
+        case "cm":
+        default: return "cm";
+    }
+};
+
+const getTemperatureLabel = (unit: string) => {
+    switch (unit) {
+        case "fahrenheit": return "°F";
+        case "celsius":
+        default: return "°C";
+    }
+};
+
+// Format height for display based on unit
+const formatHeight = (value: number | null | undefined, unit: string): string => {
+    if (value === null || value === undefined) return "";
+    if (unit === "ft_in") {
+        // Value is stored in cm, convert to feet and inches
+        const totalInches = value / 2.54;
+        const feet = Math.floor(totalInches / 12);
+        const inches = Math.round(totalInches % 12);
+        return `${feet}'${inches}"`;
+    }
+    if (unit === "m") {
+        return `${(value / 100).toFixed(2)} m`;
+    }
+    return `${value} cm`;
+};
+
+// Format weight for display based on unit
+const formatWeight = (value: number | null | undefined, unit: string): string => {
+    if (value === null || value === undefined) return "";
+    if (unit === "lbs") {
+        // Value is stored in kg, convert to lbs
+        return `${(value * 2.20462).toFixed(1)} lbs`;
+    }
+    return `${value} kg`;
+};
+
+// Format temperature for display based on unit
+const formatTemperature = (value: number | null | undefined, unit: string): string => {
+    if (value === null || value === undefined) return "";
+    if (unit === "fahrenheit") {
+        // Value is stored in Celsius, convert to Fahrenheit
+        return `${((value * 9 / 5) + 32).toFixed(1)}°F`;
+    }
+    return `${value}°C`;
+};
+
 export default function PatientMedicalRecordsClient({
     patientId,
     patientName,
     initialRecords,
     appointments,
+    metricSettings,
 }: Props) {
     const [records, setRecords] = useState<MedicalRecord[]>(initialRecords);
     const [showNewModal, setShowNewModal] = useState(false);
@@ -390,7 +460,7 @@ export default function PatientMedicalRecordsClient({
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 block mb-1">Temp (°F)</label>
+                                    <label className="text-xs text-gray-500 block mb-1">Temp ({getTemperatureLabel(metricSettings.temperatureUnit)})</label>
                                     <Input
                                         type="number"
                                         step="0.1"
@@ -398,12 +468,12 @@ export default function PatientMedicalRecordsClient({
                                         onChange={(e) =>
                                             setFormData({ ...formData, temperature: e.target.value })
                                         }
-                                        placeholder="98.6"
+                                        placeholder={metricSettings.temperatureUnit === "fahrenheit" ? "98.6" : "37.0"}
                                         className="text-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 block mb-1">Weight (kg)</label>
+                                    <label className="text-xs text-gray-500 block mb-1">Weight ({getWeightLabel(metricSettings.weightUnit)})</label>
                                     <Input
                                         type="number"
                                         step="0.1"
@@ -411,19 +481,19 @@ export default function PatientMedicalRecordsClient({
                                         onChange={(e) =>
                                             setFormData({ ...formData, weight: e.target.value })
                                         }
-                                        placeholder="70"
+                                        placeholder={metricSettings.weightUnit === "lbs" ? "154" : "70"}
                                         className="text-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 block mb-1">Height (cm)</label>
+                                    <label className="text-xs text-gray-500 block mb-1">Height ({getHeightLabel(metricSettings.heightUnit)})</label>
                                     <Input
-                                        type="number"
+                                        type={metricSettings.heightUnit === "ft_in" ? "text" : "number"}
                                         value={formData.height}
                                         onChange={(e) =>
                                             setFormData({ ...formData, height: e.target.value })
                                         }
-                                        placeholder="170"
+                                        placeholder={metricSettings.heightUnit === "ft_in" ? "5'10\"" : metricSettings.heightUnit === "m" ? "1.70" : "170"}
                                         className="text-sm"
                                     />
                                 </div>
@@ -604,19 +674,19 @@ export default function PatientMedicalRecordsClient({
                                             {selectedRecord.temperature && (
                                                 <div className="bg-gray-50 rounded-lg p-3 text-center">
                                                     <p className="text-xs text-gray-500">Temp</p>
-                                                    <p className="font-medium">{selectedRecord.temperature}°F</p>
+                                                    <p className="font-medium">{formatTemperature(selectedRecord.temperature, metricSettings.temperatureUnit)}</p>
                                                 </div>
                                             )}
                                             {selectedRecord.weight && (
                                                 <div className="bg-gray-50 rounded-lg p-3 text-center">
                                                     <p className="text-xs text-gray-500">Weight</p>
-                                                    <p className="font-medium">{selectedRecord.weight} kg</p>
+                                                    <p className="font-medium">{formatWeight(selectedRecord.weight, metricSettings.weightUnit)}</p>
                                                 </div>
                                             )}
                                             {selectedRecord.height && (
                                                 <div className="bg-gray-50 rounded-lg p-3 text-center">
                                                     <p className="text-xs text-gray-500">Height</p>
-                                                    <p className="font-medium">{selectedRecord.height} cm</p>
+                                                    <p className="font-medium">{formatHeight(selectedRecord.height, metricSettings.heightUnit)}</p>
                                                 </div>
                                             )}
                                         </div>
