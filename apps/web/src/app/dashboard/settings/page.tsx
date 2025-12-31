@@ -43,6 +43,8 @@ export default async function SettingsPage() {
 			weightUnit: true,
 			heightUnit: true,
 			temperatureUnit: true,
+			// Report settings
+			autoReportsEnabled: true,
 			members: {
 				select: {
 					role: true,
@@ -137,6 +139,7 @@ export default async function SettingsPage() {
 					weightUnit: organization.weightUnit ?? "kg",
 					heightUnit: organization.heightUnit ?? "cm",
 					temperatureUnit: organization.temperatureUnit ?? "celsius",
+					autoReportsEnabled: organization.autoReportsEnabled ?? true,
 				}}
 			/>
 		</div>

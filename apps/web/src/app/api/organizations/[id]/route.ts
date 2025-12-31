@@ -53,6 +53,8 @@ export async function GET(
                 weightUnit: true,
                 heightUnit: true,
                 temperatureUnit: true,
+                // Report settings
+                autoReportsEnabled: true,
             },
         });
 
@@ -144,6 +146,11 @@ export async function PATCH(
             updateData.temperatureUnit = body.temperatureUnit || null;
         }
 
+        // Report settings
+        if (body.autoReportsEnabled !== undefined) {
+            updateData.autoReportsEnabled = Boolean(body.autoReportsEnabled);
+        }
+
         const organization = await db.organization.update({
             where: { id },
             data: updateData,
@@ -165,6 +172,7 @@ export async function PATCH(
                 weightUnit: true,
                 heightUnit: true,
                 temperatureUnit: true,
+                autoReportsEnabled: true,
             },
         });
 

@@ -18,6 +18,7 @@ import {
     ChevronDown,
     Info,
     Ruler,
+    BarChart3,
 } from "lucide-react";
 import {
     Select,
@@ -72,6 +73,8 @@ type OrganizationSettings = {
     weightUnit: string;
     heightUnit: string;
     temperatureUnit: string;
+    // Reports
+    autoReportsEnabled: boolean;
 };
 
 type Props = {
@@ -618,6 +621,49 @@ export default function SettingsClient({
                             </CollapsibleContent>
                         </Card>
                     </Collapsible>
+
+                    {/* Automated Reports */}
+                    <Card className="border-gray-200 rounded-2xl">
+                        <CardHeader>
+                            <CardTitle className="text-lg font-semibold text-gray-900">Automated Reports</CardTitle>
+                            <CardDescription className="text-sm text-gray-500 mt-1">
+                                Receive periodic clinic performance reports via email
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <BarChart3 className="h-5 w-5 text-teal-600" />
+                                    <div>
+                                        <p className="font-medium text-gray-900">Send Automated Reports</p>
+                                        <p className="text-sm text-gray-500">
+                                            Clinic performance reports sent to all administrators
+                                        </p>
+                                    </div>
+                                </div>
+                                <Switch
+                                    checked={settings.autoReportsEnabled}
+                                    onCheckedChange={(checked) => updateSetting('autoReportsEnabled', checked)}
+                                />
+                            </div>
+
+                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                <p className="text-sm text-gray-700">
+                                    <span className="font-medium">Report Frequency:</span> Reports are generated every{" "}
+                                    <span className="font-semibold text-teal-700">{process.env.NEXT_PUBLIC_CLINIC_REPORT_INTERVAL_DAYS || "3"} days</span>{" "}
+                                    and include patient statistics, appointment summaries, and performance metrics.
+                                </p>
+                            </div>
+
+                            <Button
+                                onClick={saveAllSettings}
+                                className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={!hasChanges || saving}
+                            >
+                                {saving ? "Saving..." : hasChanges ? "Save Settings" : "No Changes"}
+                            </Button>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 {/* Metrics Tab */}

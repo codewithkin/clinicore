@@ -102,6 +102,10 @@ model Organization {
   heightUnit               String?      @default("cm")      // cm, ft_in (feet & inches), m (meters)
   temperatureUnit          String?      @default("celsius") // celsius, fahrenheit
 
+  // Automated Report Settings
+  autoReportsEnabled       Boolean?     @default(true)
+  lastReportGeneratedAt    DateTime?
+
   @@unique([slug])
   @@map("organization")
 }
