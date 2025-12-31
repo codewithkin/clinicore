@@ -74,6 +74,11 @@ const adminNavItems = [
 		url: "/dashboard/billing",
 		icon: CreditCard,
 	},
+	{
+		title: "Organisation",
+		url: "/dashboard/settings",
+		icon: Building2,
+	},
 ];
 
 // Admin-only clinic settings
