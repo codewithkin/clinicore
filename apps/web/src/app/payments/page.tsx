@@ -1,13 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Polar } from "@polar-sh/sdk";
 import { Button } from "@/components/ui/button";
 
-export default function PaymentsPage() {
+function PaymentsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { data: session } = authClient.useSession();
@@ -117,7 +117,7 @@ export default function PaymentsPage() {
                             {plan} Plan
                         </p>
                     )}
-                    {session?.user?.plan && (
+                    {plan && (
                         <p className="text-sm text-gray-500 mt-2">
                             Your account has been upgraded
                         </p>
@@ -151,5 +151,20 @@ export default function PaymentsPage() {
                 </Button>
             </div>
         </div>
+    );
+}
+
+export default function PaymentsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading...</p>
+                </div>
+            </div>
+        }>
+            <PaymentsContent />
+        </Suspense>
     );
 }
