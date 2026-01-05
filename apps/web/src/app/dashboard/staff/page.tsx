@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@my-better-t-app/auth";
+import { getUserOrganization, getUserRole, isAdmin as checkIsAdmin } from "@/lib/dashboard-helpers";
 
 export default async function StaffPage() {
 	const session = await auth.api.getSession({
@@ -11,10 +12,16 @@ export default async function StaffPage() {
 		redirect("/auth/signup");
 	}
 
-	// Check if user is admin
-	const isAdmin = session.user.role === "admin" || session.user.role === "owner";
+	// Get user's organization and role
+	const organizationId = await getUserOrganization(session.user.id);
+	if (!organizationId) {
+		redirect("/auth/onboarding");
+	}
 
-	if (!isAdmin) {
+	const userRole = await getUserRole(session.user.id, organizationId);
+	const isAdminUser = checkIsAdmin(userRole);
+
+	if (!isAdminUser) {
 		redirect("/dashboard");
 	}
 
