@@ -57,14 +57,15 @@ export async function uploadFileToS3(
     
     const key = `${folder}/${fileName}`;
 
-    // Convert File to ArrayBuffer for browser compatibility
+    // Convert File to Uint8Array for browser compatibility
     const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
 
     // Create upload command (without ACL - use bucket policy instead)
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,
-      Body: arrayBuffer,
+      Body: uint8Array,
       ContentType: file.type,
     });
 
