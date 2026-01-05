@@ -11,8 +11,9 @@
   "type": "module",
   "scripts": {},
   "devDependencies": {
-    "typescript": "catalog:",
-    "@my-better-t-app/config": "workspace:*"
+    "@my-better-t-app/config": "workspace:*",
+    "@types/nodemailer": "^7.0.4",
+    "typescript": "catalog:"
   },
   "dependencies": {
     "@dodopayments/better-auth": "^1.4.1",
