@@ -24,7 +24,8 @@ export async function GET() {
 			externalCustomerId: session.user.id,
 		});
 
-		if (!customerSession.customerSessionToken) {
+		const sessionToken = customerSession.token;
+		if (!sessionToken) {
 			return NextResponse.json({ subscription: null, orders: [] });
 		}
 
@@ -33,7 +34,7 @@ export async function GET() {
 			"https://sandbox-api.polar.sh/v1/customer-portal/subscriptions",
 			{
 				headers: {
-					Authorization: `Bearer ${customerSession.customerSessionToken}`,
+					Authorization: `Bearer ${sessionToken}`,
 				},
 			}
 		);
@@ -47,7 +48,7 @@ export async function GET() {
 			"https://sandbox-api.polar.sh/v1/customer-portal/orders?limit=10",
 			{
 				headers: {
-					Authorization: `Bearer ${customerSession.customerSessionToken}`,
+					Authorization: `Bearer ${sessionToken}`,
 				},
 			}
 		);
