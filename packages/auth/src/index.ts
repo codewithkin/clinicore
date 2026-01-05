@@ -238,7 +238,7 @@ If you weren't expecting this, you can ignore this email.`,
 
     // Polar payment integration
     polar({
-      client: polarClient,
+      client: polarClient as any,
       createCustomerOnSignUp: true, // Enable automatic customer creation
       use: [
         checkout({
