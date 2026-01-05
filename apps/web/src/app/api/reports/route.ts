@@ -65,12 +65,13 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Schedule reports for all organizations that need them
-		const result = await scheduleAllReports();
+		const job = await scheduleAllReports();
 
 		return NextResponse.json({
 			success: true,
-			message: `Queued ${result.jobsQueued} report jobs`,
-			...result,
+			message: "Scheduled report generation for all organizations",
+			jobId: job.id,
+			jobName: job.name,
 			intervalDays: REPORT_INTERVAL_DAYS,
 		});
 	} catch (error: any) {
