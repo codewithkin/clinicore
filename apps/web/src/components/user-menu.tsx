@@ -23,7 +23,7 @@ export default function UserMenu() {
 	if (!session) {
 		return (
 			<Button variant="outline" asChild>
-				<Link href="/login">Sign In</Link>
+				<Link href={"/auth/signin" as any}>Sign In</Link>
 			</Button>
 		);
 	}

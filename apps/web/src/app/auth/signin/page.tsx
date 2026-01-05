@@ -5,14 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
-export default function SignInPage() {
+function SignInForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirect = searchParams.get("redirect") || "/dashboard";
@@ -52,7 +52,7 @@ export default function SignInPage() {
 
         onSuccess: () => {
             toast.success("Signed in successfully");
-            router.replace(redirect || "/dashboard");
+            router.replace((redirect || "/dashboard") as any);
         },
 
         onError: (error: Error) => {
@@ -90,7 +90,7 @@ export default function SignInPage() {
                         <div className="flex items-center justify-between">
                             <Label htmlFor="password">Password</Label>
                             <Link
-                                href="/auth/forgot-password"
+                                href={"/auth/forgot-password" as any}
                                 className="text-sm font-medium text-green-400 hover:text-green-600 transition"
                             >
                                 Forgot password?
@@ -135,5 +135,13 @@ export default function SignInPage() {
                 </div>
             </article>
         </section>
+    );
+}
+
+export default function SignInPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <SignInForm />
+        </Suspense>
     );
 }
