@@ -1,8 +1,8 @@
 import prisma from "@my-better-t-app/db";
 import { NextResponse } from "next/server";
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-    const invitationId = params.id;
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id: invitationId } = await params;
     if (!invitationId) {
         return NextResponse.json({ error: "Missing invitation id" }, { status: 400 });
     }
