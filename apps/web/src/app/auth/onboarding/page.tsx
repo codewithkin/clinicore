@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
    Component
 ---------------------------------------------- */
 
-export default function Onboarding() {
+function OnboardingContent() {
     const { data: session } = authClient.useSession();
 
     const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -877,5 +877,20 @@ export default function Onboarding() {
                 </AnimatePresence>
             </article>
         </section>
+    );
+}
+
+export default function Onboarding() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600">Loading...</p>
+                </div>
+            </div>
+        }>
+            <OnboardingContent />
+        </Suspense>
     );
 }
