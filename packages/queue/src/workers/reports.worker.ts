@@ -1,7 +1,7 @@
-import { Worker, Job } from "bullmq";
-import { redisConnection, QUEUE_NAMES } from "./config";
-import type { ClinicReportJobData, ReportJobData, ScheduleReportsJobData } from "./queues/reports.queue";
-import { addReportJob } from "./queues/reports.queue";
+import { Worker, type Job } from "bullmq";
+import { redisConnection, QUEUE_NAMES } from "../config";
+import type { ClinicReportJobData, ReportJobData, ScheduleReportsJobData } from "../queues/reports.queue";
+import { addReportJob } from "../queues/reports.queue";
 
 // Default report interval in days
 const REPORT_INTERVAL_DAYS = parseInt(process.env.CLINIC_REPORT_INTERVAL_DAYS || "3", 10);
@@ -14,7 +14,7 @@ async function processReportJob(job: Job<ReportJobData>) {
 
 	// Check if this is a schedule-all job
 	if ("type" in job.data && job.data.type === "schedule-all") {
-		return processScheduleAllJob(job, db);
+		return processScheduleAllJob(job as unknown as Job<ScheduleReportsJobData>, db);
 	}
 
 	// Process individual organization report

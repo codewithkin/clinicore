@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { redisConnection, QUEUE_NAMES, DEFAULT_JOB_OPTIONS } from "./config";
+import { redisConnection, QUEUE_NAMES, DEFAULT_JOB_OPTIONS } from "../config";
 
 // Report job data types
 export interface ClinicReportJobData {
